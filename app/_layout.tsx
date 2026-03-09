@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function RootLayout() {
-  const { session, setSession, fetchPlayer } = useAuthStore();
+  const { session, loading, setSession, fetchPlayer } = useAuthStore();
   const router = useRouter();
   const segments = useSegments();
 
@@ -31,6 +31,8 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
+
     const inAuthGroup = segments[0] === "auth";
 
     if (!session && !inAuthGroup) {
@@ -38,7 +40,7 @@ export default function RootLayout() {
     } else if (session && inAuthGroup) {
       router.replace("/(tabs)");
     }
-  }, [session, segments]);
+  }, [session, segments, loading]);
 
   return (
     <>
