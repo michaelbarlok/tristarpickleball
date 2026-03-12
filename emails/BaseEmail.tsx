@@ -23,7 +23,7 @@ export default function BaseEmail({ preview, heading, children }: BaseEmailProps
       <Preview>{preview}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>PaddleUp Pickleball</Heading>
+          <Heading style={h1}>PickleTrack</Heading>
           <Hr style={hr} />
           <Heading as="h2" style={h2}>
             {heading}
@@ -31,7 +31,7 @@ export default function BaseEmail({ preview, heading, children }: BaseEmailProps
           <Section>{children}</Section>
           <Hr style={hr} />
           <Text style={footer}>
-            PaddleUp Pickleball Ladder League
+            PickleTrack Ladder League
           </Text>
         </Container>
       </Body>
