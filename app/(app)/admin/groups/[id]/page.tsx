@@ -135,6 +135,7 @@ export default function AdminGroupDetailPage() {
       pct_window_sessions: Number(form.get("pct_window_sessions")),
       new_player_start_step: Number(form.get("new_player_start_step")),
       min_step: Number(form.get("min_step")),
+      max_step: Number(form.get("max_step")),
       step_move_up: Number(form.get("step_move_up")),
       step_move_down: Number(form.get("step_move_down")),
       game_limit_4p: Number(form.get("game_limit_4p")),
@@ -440,7 +441,7 @@ export default function AdminGroupDetailPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Minimum Step
+                Highest Step
               </label>
               <input
                 type="number"
@@ -450,7 +451,23 @@ export default function AdminGroupDetailPage() {
                 className="input mt-1 w-full"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Lowest step a player can reach (1 = top of ladder).
+                The best position on the ladder (1 = top).
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Lowest Step
+              </label>
+              <input
+                type="number"
+                name="max_step"
+                defaultValue={preferences.max_step}
+                min={1}
+                className="input mt-1 w-full"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                The lowest number step a player can drop to.
               </p>
             </div>
 
@@ -488,7 +505,7 @@ export default function AdminGroupDetailPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Game Limit (4 players)
+                Four Player Score Limit
               </label>
               <input
                 type="number"
@@ -498,13 +515,13 @@ export default function AdminGroupDetailPage() {
                 className="input mt-1 w-full"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Number of games played in a 4-player pool.
+                Games to {preferences.game_limit_4p} in a 4-player pool.
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Game Limit (5 players)
+                Five Player Score Limit
               </label>
               <input
                 type="number"
@@ -514,7 +531,7 @@ export default function AdminGroupDetailPage() {
                 className="input mt-1 w-full"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Number of games played in a 5-player pool.
+                Games to {preferences.game_limit_5p} in a 5-player pool.
               </p>
             </div>
 
