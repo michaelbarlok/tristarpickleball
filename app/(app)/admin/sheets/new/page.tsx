@@ -17,14 +17,40 @@ export default function NewSheetPage() {
   // Form state
   const [groupId, setGroupId] = useState("");
   const [eventDate, setEventDate] = useState("");
-  const [eventTime, setEventTime] = useState("");
+  const [eventTime, setEventTime] = useState("09:00");
   const [location, setLocation] = useState("");
   const [playerLimit, setPlayerLimit] = useState(16);
-  const [signupClosesAt, setSignupClosesAt] = useState("");
-  const [withdrawClosesAt, setWithdrawClosesAt] = useState("");
+  const [signupCloseHours, setSignupCloseHours] = useState("1");
+  const [withdrawCloseHours, setWithdrawCloseHours] = useState("");
   const [allowMemberGuests, setAllowMemberGuests] = useState(false);
   const [notifyOnCreate, setNotifyOnCreate] = useState(true);
   const [notes, setNotes] = useState("");
+
+  // Generate 15-min time options
+  const timeOptions: string[] = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hh = h.toString().padStart(2, "0");
+      const mm = m.toString().padStart(2, "0");
+      timeOptions.push(`${hh}:${mm}`);
+    }
+  }
+
+  function formatTime12h(time24: string) {
+    const [hStr, mStr] = time24.split(":");
+    const h = parseInt(hStr, 10);
+    const suffix = h >= 12 ? "PM" : "AM";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${mStr} ${suffix}`;
+  }
+
+  function computeCloseTime(hoursStr: string): string | null {
+    if (!hoursStr || !eventDate || !eventTime) return null;
+    const hours = parseInt(hoursStr, 10);
+    const dt = new Date(`${eventDate}T${eventTime}`);
+    dt.setHours(dt.getHours() - hours);
+    return dt.toISOString();
+  }
 
   useEffect(() => {
     async function load() {
@@ -55,8 +81,16 @@ export default function NewSheetPage() {
       setError("Date, time, and location are required.");
       return;
     }
-    if (!signupClosesAt) {
+    if (!signupCloseHours) {
       setError("Sign-up close time is required.");
+      return;
+    }
+
+    const signupClosesAt = computeCloseTime(signupCloseHours);
+    const withdrawClosesAt = computeCloseTime(withdrawCloseHours);
+
+    if (!signupClosesAt) {
+      setError("Could not compute sign-up close time. Check date and time.");
       return;
     }
 
@@ -90,10 +124,8 @@ export default function NewSheetPage() {
           event_time: eventTime,
           location: location.trim(),
           player_limit: playerLimit,
-          signup_closes_at: new Date(signupClosesAt).toISOString(),
-          withdraw_closes_at: withdrawClosesAt
-            ? new Date(withdrawClosesAt).toISOString()
-            : null,
+          signup_closes_at: signupClosesAt,
+          withdraw_closes_at: withdrawClosesAt,
           allow_member_guests: allowMemberGuests,
           notify_on_create: notifyOnCreate,
           notes: notes.trim() || null,
@@ -198,14 +230,19 @@ export default function NewSheetPage() {
             <label htmlFor="eventTime" className="block text-sm font-medium text-gray-700 mb-1">
               Event Time
             </label>
-            <input
+            <select
               id="eventTime"
-              type="time"
               value={eventTime}
               onChange={(e) => setEventTime(e.target.value)}
               className="input w-full"
               required
-            />
+            >
+              {timeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {formatTime12h(t)}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -241,30 +278,41 @@ export default function NewSheetPage() {
           </div>
           <div>
             <label htmlFor="signupClosesAt" className="block text-sm font-medium text-gray-700 mb-1">
-              Sign-Up Closes At
+              Sign-Up Closes
             </label>
-            <input
+            <select
               id="signupClosesAt"
-              type="datetime-local"
-              value={signupClosesAt}
-              onChange={(e) => setSignupClosesAt(e.target.value)}
+              value={signupCloseHours}
+              onChange={(e) => setSignupCloseHours(e.target.value)}
               className="input w-full"
               required
-            />
+            >
+              <option value="1">1 hour before</option>
+              <option value="2">2 hours before</option>
+              <option value="3">3 hours before</option>
+              <option value="12">12 hours before</option>
+            </select>
           </div>
         </div>
 
-        <div>
-          <label htmlFor="withdrawClosesAt" className="block text-sm font-medium text-gray-700 mb-1">
-            Withdraw Closes At (optional)
-          </label>
-          <input
-            id="withdrawClosesAt"
-            type="datetime-local"
-            value={withdrawClosesAt}
-            onChange={(e) => setWithdrawClosesAt(e.target.value)}
-            className="input w-full"
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="withdrawClosesAt" className="block text-sm font-medium text-gray-700 mb-1">
+              Withdraw Closes
+            </label>
+            <select
+              id="withdrawClosesAt"
+              value={withdrawCloseHours}
+              onChange={(e) => setWithdrawCloseHours(e.target.value)}
+              className="input w-full"
+            >
+              <option value="">No withdraw deadline</option>
+              <option value="1">1 hour before</option>
+              <option value="2">2 hours before</option>
+              <option value="3">3 hours before</option>
+              <option value="12">12 hours before</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -291,7 +339,7 @@ export default function NewSheetPage() {
               className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
             />
             <label htmlFor="allowMemberGuests" className="text-sm font-medium text-gray-700">
-              Allow member guests
+              Allow members to add guests
             </label>
           </div>
           <div className="flex items-center gap-3">
