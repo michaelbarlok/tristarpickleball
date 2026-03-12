@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { formatDate, formatShortDate } from "@/lib/utils";
 import type { SignupSheet } from "@/types/database";
+import { QuickSignUp } from "./quick-signup";
 
 const statusBadge: Record<string, { className: string; label: string }> = {
   open: { className: "badge-green", label: "Open" },
@@ -11,6 +12,18 @@ const statusBadge: Record<string, { className: string; label: string }> = {
 
 export default async function SheetsPage() {
   const supabase = await createClient();
+
+  // Get current user's profile
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+    : { data: null };
 
   const { data: sheets, error } = await supabase
     .from("signup_sheets")
@@ -40,6 +53,20 @@ export default async function SheetsPage() {
     }
   });
 
+  // Fetch current user's registrations
+  const myRegMap: Record<string, string> = {};
+  if (profile) {
+    const { data: myRegs } = await supabase
+      .from("registrations")
+      .select("sheet_id, status")
+      .eq("player_id", profile.id)
+      .in("sheet_id", sheetIds.length > 0 ? sheetIds : ["__none__"])
+      .in("status", ["confirmed", "waitlist"]);
+    (myRegs ?? []).forEach((r: { sheet_id: string; status: string }) => {
+      myRegMap[r.sheet_id] = r.status;
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,14 +82,19 @@ export default async function SheetsPage() {
           {sheets.map((sheet: SignupSheet & { group?: { id: string; name: string; slug: string } }) => {
             const badge = statusBadge[sheet.status] ?? statusBadge.closed;
             const registered = countMap[sheet.id] ?? 0;
+            const myStatus = myRegMap[sheet.id];
+            const isOpen = sheet.status === "open";
+            const signupClosed = new Date(sheet.signup_closes_at) < new Date();
 
             return (
-              <Link
+              <div
                 key={sheet.id}
-                href={`/sheets/${sheet.id}`}
                 className="card flex items-center justify-between hover:ring-brand-300 transition-shadow"
               >
-                <div className="min-w-0 flex-1">
+                <Link
+                  href={`/sheets/${sheet.id}`}
+                  className="min-w-0 flex-1"
+                >
                   <div className="flex items-center gap-3">
                     <p className="font-semibold text-gray-900">
                       {sheet.group?.name ?? "Event"}
@@ -73,14 +105,23 @@ export default async function SheetsPage() {
                     <span>{formatDate(sheet.event_date)}</span>
                     <span>{sheet.location}</span>
                   </div>
+                </Link>
+                <div className="ml-4 flex items-center gap-3 shrink-0">
+                  <div className="text-right text-sm text-gray-600">
+                    <span className="font-medium text-gray-900">
+                      {registered}
+                    </span>
+                    /{sheet.player_limit} players
+                  </div>
+                  {myStatus ? (
+                    <span className={myStatus === "confirmed" ? "badge-green" : "badge-yellow"}>
+                      {myStatus === "confirmed" ? "Signed Up" : "Waitlisted"}
+                    </span>
+                  ) : isOpen && !signupClosed ? (
+                    <QuickSignUp sheetId={sheet.id} />
+                  ) : null}
                 </div>
-                <div className="ml-4 text-right text-sm text-gray-600 shrink-0">
-                  <span className="font-medium text-gray-900">
-                    {registered}
-                  </span>
-                  /{sheet.player_limit} players
-                </div>
-              </Link>
+              </div>
             );
           })}
         </div>
