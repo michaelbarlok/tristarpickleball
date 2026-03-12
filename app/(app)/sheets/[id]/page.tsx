@@ -67,12 +67,13 @@ export default async function SheetDetailPage({
   const isFull = confirmed.length >= sheet.player_limit;
   const isAdmin = profile.role === "admin";
 
-  // For admin add-member: fetch all profiles not already registered
+  // Add-member: admins always, regular members when allow_member_guests is on
+  const canAddMembers = isAdmin || (sheet.allow_member_guests && !signupClosed);
   const registeredPlayerIds = new Set(
     (registrations ?? []).map((r: Registration) => r.player_id)
   );
   let availableMembers: { id: string; display_name: string }[] = [];
-  if (isAdmin && !isCancelled) {
+  if (canAddMembers && !isCancelled) {
     const { data: allProfiles } = await supabase
       .from("profiles")
       .select("id, display_name")
@@ -193,8 +194,8 @@ export default async function SheetDetailPage({
         />
       )}
 
-      {/* Admin: Add a member */}
-      {isAdmin && !isCancelled && (
+      {/* Add a member (admins always, regular members when enabled) */}
+      {canAddMembers && !isCancelled && (
         <AdminAddMember sheetId={sheet.id} members={availableMembers} />
       )}
 

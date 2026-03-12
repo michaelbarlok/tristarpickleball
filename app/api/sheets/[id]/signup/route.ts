@@ -40,26 +40,27 @@ export async function POST(
       );
     }
 
-    // If signing up someone else, must be admin
-    const playerId = targetPlayerId || callerProfile.id;
-    if (targetPlayerId && targetPlayerId !== callerProfile.id) {
-      if (callerProfile.role !== "admin") {
-        return NextResponse.json(
-          { error: "Only admins can sign up other members" },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Fetch the sheet
+    // Fetch the sheet (need allow_member_guests for authorization check)
     const { data: sheet, error: sheetError } = await supabase
       .from("signup_sheets")
-      .select("id, status, player_limit, signup_closes_at")
+      .select("id, status, player_limit, signup_closes_at, allow_member_guests")
       .eq("id", sheetId)
       .single();
 
     if (sheetError || !sheet) {
       return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
+    }
+
+    // Authorization: signing up someone else requires admin OR allow_member_guests
+    const playerId = targetPlayerId || callerProfile.id;
+    if (targetPlayerId && targetPlayerId !== callerProfile.id) {
+      const isAdmin = callerProfile.role === "admin";
+      if (!isAdmin && !sheet.allow_member_guests) {
+        return NextResponse.json(
+          { error: "Adding other members is not enabled for this sheet" },
+          { status: 403 }
+        );
+      }
     }
 
     if (sheet.status !== "open") {
