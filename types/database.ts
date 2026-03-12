@@ -115,6 +115,7 @@ export interface GroupPreferences {
   pct_window_sessions: number;
   new_player_start_step: number;
   min_step: number;
+  max_step: number;
   step_move_up: number;
   step_move_down: number;
   game_limit_4p: number;
