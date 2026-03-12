@@ -1,95 +1,72 @@
 import { Tabs } from "expo-router";
-import { useColorScheme, View, Text } from "react-native";
-import { useAnnouncementsStore } from "@/store/announcements.store";
+import { useColorScheme, View, Text, StyleSheet } from "react-native";
 
-function TabIcon({
-  focused,
-  label,
-  emoji,
-  badge,
-}: {
-  focused: boolean;
-  label: string;
-  emoji: string;
-  badge?: number;
-}) {
+const ICONS: Record<string, { emoji: string; label: string }> = {
+  club:      { emoji: "🏟️", label: "Club" },
+  play:      { emoji: "🏓", label: "Play" },
+  "sign-ups": { emoji: "📋", label: "Sign-Ups" },
+  members:   { emoji: "👥", label: "Members" },
+};
+
+function TabIcon({ name, focused }: { name: string; focused: boolean }) {
+  const { emoji, label } = ICONS[name] ?? { emoji: "•", label: name };
   return (
-    <View className="items-center justify-center pt-1">
-      <View>
-        <Text style={{ fontSize: 22 }}>{emoji}</Text>
-        {badge != null && badge > 0 && (
-          <View className="absolute -top-1 -right-2 bg-red-500 rounded-full w-4 h-4 items-center justify-center">
-            <Text className="text-white text-xs font-bold">{badge}</Text>
-          </View>
-        )}
-      </View>
-      <Text
-        className={`text-xs mt-0.5 ${focused ? "text-green-600 font-semibold" : "text-gray-500"}`}
-      >
-        {label}
-      </Text>
+    <View style={[s.iconWrap, focused && s.iconWrapActive]}>
+      <Text style={{ fontSize: 18, lineHeight: 22 }}>{emoji}</Text>
+      <Text style={[s.label, focused && s.labelActive]}>{label}</Text>
     </View>
   );
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const { unreadCount } = useAnnouncementsStore();
-  const isDark = colorScheme === "dark";
+  const isDark = useColorScheme() === "dark";
 
   return (
     <Tabs
-      screenOptions={{
+      initialRouteName="club"
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: isDark ? "#111827" : "#ffffff",
-          borderTopColor: isDark ? "#374151" : "#e5e7eb",
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: isDark ? "#0f172a" : "#ffffff",
+          borderTopWidth: 1,
+          borderTopColor: isDark ? "#1e293b" : "#f1f5f9",
+          height: 68,
+          paddingBottom: 10,
+          paddingTop: 6,
+          paddingHorizontal: 8,
         },
-      }}
+        tabBarIcon: ({ focused }) => (
+          <TabIcon name={route.name} focused={focused} />
+        ),
+      })}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Home" emoji="🏠" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="live"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Live" emoji="🎾" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="standings"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Standings" emoji="🏆" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="inbox"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Inbox" emoji="📬" badge={unreadCount} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Profile" emoji="👤" />
-          ),
-        }}
-      />
+      <Tabs.Screen name="club" />
+      <Tabs.Screen name="play" />
+      <Tabs.Screen name="sign-ups" />
+      <Tabs.Screen name="members" />
     </Tabs>
   );
 }
+
+const s = StyleSheet.create({
+  iconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 2,
+  },
+  iconWrapActive: {
+    backgroundColor: "#ecfdf5",
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#94a3b8",
+  },
+  labelActive: {
+    color: "#10b981",
+  },
+});
