@@ -24,7 +24,7 @@ export async function POST(
     .eq("user_id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -37,6 +37,20 @@ export async function POST(
 
   if (sheetErr || !sheet) {
     return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
+  }
+
+  // Allow global admins OR group admins of this sheet's group
+  if (profile.role !== "admin") {
+    const { data: membership } = await supabase
+      .from("group_memberships")
+      .select("group_role")
+      .eq("group_id", sheet.group_id)
+      .eq("player_id", profile.id)
+      .single();
+
+    if (!membership || membership.group_role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   if (sheet.status === "cancelled") {
@@ -77,15 +91,18 @@ export async function POST(
       month: "long",
       day: "numeric",
     });
+    const eventTime = sheet.event_time
+      ? new Date(sheet.event_time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+      : null;
 
     await notifyMany(playerIds, {
       type: "sheet_cancelled",
       title: `${groupName} Cancelled`,
-      body: `The ${groupName} event on ${eventDate} has been cancelled.`,
+      body: `The ${groupName} event on ${eventDate}${eventTime ? ` at ${eventTime}` : ""} has been cancelled.`,
       link: `/sheets/${id}`,
       groupId: sheet.group_id,
       emailTemplate: "SheetCancelled",
-      emailData: { groupName, eventDate },
+      emailData: { groupName, eventDate, eventTime: sheet.event_time },
     });
   }
 
