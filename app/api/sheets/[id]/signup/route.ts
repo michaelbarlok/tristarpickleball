@@ -47,7 +47,7 @@ export async function POST(
     // Fetch the sheet (need allow_member_guests for authorization check)
     const { data: sheet, error: sheetError } = await supabase
       .from("signup_sheets")
-      .select("id, status, player_limit, signup_closes_at, allow_member_guests")
+      .select("id, group_id, status, player_limit, signup_closes_at, allow_member_guests")
       .eq("id", sheetId)
       .single();
 
@@ -67,20 +67,34 @@ export async function POST(
       }
     }
 
-    // Determine priority: explicit override > auto (admin=high) > normal
+    // Determine priority: explicit override > auto (global admin or group admin = high) > normal
     let priority = priorityOverride ?? "normal";
     if (!priorityOverride) {
-      if (targetPlayerId && targetPlayerId !== callerProfile.id) {
-        // Signing up someone else — check the target player's role
+      const checkPlayerId = targetPlayerId && targetPlayerId !== callerProfile.id
+        ? targetPlayerId
+        : callerProfile.id;
+
+      // Check global admin
+      if (checkPlayerId === callerProfile.id && callerProfile.role === "admin") {
+        priority = "high";
+      } else if (checkPlayerId !== callerProfile.id) {
         const { data: targetProfile } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", targetPlayerId)
+          .eq("id", checkPlayerId)
           .single();
         if (targetProfile?.role === "admin") priority = "high";
-      } else {
-        // Signing up self
-        if (callerProfile.role === "admin") priority = "high";
+      }
+
+      // Check group admin (if not already high from global admin)
+      if (priority !== "high" && sheet.group_id) {
+        const { data: membership } = await supabase
+          .from("group_memberships")
+          .select("group_role")
+          .eq("group_id", sheet.group_id)
+          .eq("player_id", checkPlayerId)
+          .single();
+        if (membership?.group_role === "admin") priority = "high";
       }
     }
 

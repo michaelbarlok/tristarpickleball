@@ -127,6 +127,8 @@ export interface GroupPreferences {
   updated_at: string;
 }
 
+export type GroupRole = "admin" | "member";
+
 export interface GroupMembership {
   group_id: string;
   player_id: string;
@@ -135,6 +137,7 @@ export interface GroupMembership {
   total_sessions: number;
   last_played_at?: string | null;
   joined_at: string;
+  group_role: GroupRole;
   // Relations
   player?: Profile;
   group?: ShootoutGroup;

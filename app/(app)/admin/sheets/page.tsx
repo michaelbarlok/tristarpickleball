@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatShortDate } from "@/lib/utils";
 import type { SignupSheet } from "@/types/database";
@@ -12,20 +11,6 @@ const statusBadge: Record<string, { className: string; label: string }> = {
 
 export default async function AdminSheetsPage() {
   const supabase = await createClient();
-
-  // Verify admin
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!profile || profile.role !== "admin") redirect("/");
 
   // Fetch all sheets
   const { data: sheets, error } = await supabase
