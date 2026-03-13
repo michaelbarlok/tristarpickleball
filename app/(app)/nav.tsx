@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const playerNav = [
-  { name: "Dashboard", href: "/" },
+  { name: "Dashboard", href: "/dashboard" },
   { name: "Groups", href: "/groups" },
   { name: "Sheets", href: "/sheets" },
   { name: "Rankings", href: "/ratings" },
