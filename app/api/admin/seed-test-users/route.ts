@@ -17,7 +17,8 @@ const LAST_NAMES = [
   "Perez", "Roberts", "Turner", "Phillips", "Campbell", "Parker", "Evans", "Edwards",
 ];
 
-export async function POST() {
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
   const supabase = await createClient();
 
   // Verify admin
@@ -40,14 +41,26 @@ export async function POST() {
   }
   const serviceClient = await createServiceClient();
 
-  // Find the open sheet
-  const { data: sheet } = await serviceClient
-    .from("signup_sheets")
-    .select("id, player_limit, group_id")
-    .eq("status", "open")
-    .order("event_date", { ascending: true })
-    .limit(1)
-    .single();
+  // Find the sheet — use provided sheetId or fall back to first open sheet
+  let sheet: { id: string; player_limit: number; group_id: string } | null = null;
+
+  if (body.sheetId) {
+    const { data } = await serviceClient
+      .from("signup_sheets")
+      .select("id, player_limit, group_id")
+      .eq("id", body.sheetId)
+      .single();
+    sheet = data;
+  } else {
+    const { data } = await serviceClient
+      .from("signup_sheets")
+      .select("id, player_limit, group_id")
+      .eq("status", "open")
+      .order("event_date", { ascending: true })
+      .limit(1)
+      .single();
+    sheet = data;
+  }
 
   if (!sheet) {
     return NextResponse.json({ error: "No open sheet found" }, { status: 404 });
