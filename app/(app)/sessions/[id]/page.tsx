@@ -89,6 +89,7 @@ interface ScheduledMatch {
   gameNumber: number;
   team1: string[];
   team2: string[];
+  bye?: string;
   result?: { scoreA: number; scoreB: number };
 }
 
@@ -114,11 +115,11 @@ function generateMatchSchedule(
     // 5-player round robin: 5 games, each player sits out once
     const [a, b, c, d, e] = playerIds;
     matches.push(
-      { gameNumber: 1, team1: [a, b], team2: [c, d] },   // e sits
-      { gameNumber: 2, team1: [a, c], team2: [b, e] },   // d sits
-      { gameNumber: 3, team1: [b, d], team2: [a, e] },   // c sits
-      { gameNumber: 4, team1: [c, e], team2: [a, d] },   // b sits
-      { gameNumber: 5, team1: [d, e], team2: [b, c] }    // a sits
+      { gameNumber: 1, team1: [a, b], team2: [c, d], bye: e },
+      { gameNumber: 2, team1: [a, c], team2: [b, e], bye: d },
+      { gameNumber: 3, team1: [b, d], team2: [a, e], bye: c },
+      { gameNumber: 4, team1: [c, e], team2: [a, d], bye: b },
+      { gameNumber: 5, team1: [d, e], team2: [b, c], bye: a }
     );
   }
 
@@ -348,17 +349,12 @@ export default function PlayerSessionPage() {
               <p className="text-sm font-medium text-brand-300">Your Court</p>
               <p className="text-3xl font-bold text-brand-200">Court {myCourt}</p>
             </div>
-            {isActive && (
-              <Link href={`/sessions/${sessionId}/score`} className="btn-primary">
-                Enter Score
-              </Link>
-            )}
           </div>
         </div>
       )}
 
       {/* Live Standings Table */}
-      {myCourt != null && standings.length > 0 && myCourtScores.length > 0 && (
+      {isActive && myCourt != null && standings.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-dark-100 mb-3">Standings — Court {myCourt}</h2>
           <div className="card overflow-hidden p-0">
@@ -401,40 +397,63 @@ export default function PlayerSessionPage() {
       )}
 
       {/* Match Schedule */}
-      {myCourt != null && matchSchedule.length > 0 && (
+      {isActive && myCourt != null && matchSchedule.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-dark-100 mb-3">Match Schedule</h2>
           <div className="space-y-2">
-            {matchSchedule.map((match) => (
-              <div
-                key={match.gameNumber}
-                className={`flex items-center justify-between rounded-lg px-4 py-3 ${
-                  match.result ? "bg-surface-overlay" : "bg-surface-raised border border-surface-border"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-surface-muted w-8">
-                    G{match.gameNumber}
-                  </span>
-                  <span className="text-sm text-dark-100">
-                    {formatTeam(match.team1, playerNames)}
-                  </span>
-                  <span className="text-xs text-surface-muted">vs</span>
-                  <span className="text-sm text-dark-100">
-                    {formatTeam(match.team2, playerNames)}
-                  </span>
-                </div>
-                <div>
-                  {match.result ? (
-                    <span className="font-mono text-sm font-semibold text-dark-200">
-                      {match.result.scoreA} – {match.result.scoreB}
+            {matchSchedule.map((match) => {
+              const matchContent = (
+                <>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-medium text-surface-muted w-8 shrink-0">
+                      G{match.gameNumber}
                     </span>
-                  ) : (
-                    <span className="text-xs text-surface-muted">Pending</span>
-                  )}
-                </div>
-              </div>
-            ))}
+                    <span className="text-sm text-dark-100">
+                      {formatTeam(match.team1, playerNames)}
+                    </span>
+                    <span className="text-xs text-surface-muted">vs</span>
+                    <span className="text-sm text-dark-100">
+                      {formatTeam(match.team2, playerNames)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {match.bye && (
+                      <span className="text-xs text-accent-300">
+                        Bye: {playerNames.get(match.bye) ?? "?"}
+                      </span>
+                    )}
+                    {match.result ? (
+                      <span className="font-mono text-sm font-semibold text-dark-200">
+                        {match.result.scoreA} – {match.result.scoreB}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-brand-300 font-medium">Enter score &rarr;</span>
+                    )}
+                  </div>
+                </>
+              );
+
+              if (match.result) {
+                return (
+                  <div
+                    key={match.gameNumber}
+                    className="flex items-center justify-between rounded-lg px-4 py-3 bg-surface-overlay"
+                  >
+                    {matchContent}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={match.gameNumber}
+                  href={`/sessions/${sessionId}/score?game=${match.gameNumber}`}
+                  className="flex items-center justify-between rounded-lg px-4 py-3 bg-surface-raised border border-surface-border hover:border-brand-500/50 hover:bg-brand-900/20 transition-colors"
+                >
+                  {matchContent}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}
