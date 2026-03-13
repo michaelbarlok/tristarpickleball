@@ -46,7 +46,7 @@ export default async function SheetsPage() {
   const safeSheetIds = sheetIds.length > 0 ? sheetIds : ["__none__"];
 
   // Try with player join first, fall back to plain + separate profiles query
-  let registrations: { sheet_id: string; status: string; player_id: string; player?: { display_name: string } | null }[] = [];
+  let registrations: { sheet_id: string; status: string; player_id: string; playerName: string }[] = [];
   {
     const { data, error: regError } = await supabase
       .from("registrations")
@@ -72,12 +72,19 @@ export default async function SheetsPage() {
           .in("id", playerIds);
         const playerMap = new Map((players ?? []).map((p) => [p.id, p.display_name]));
         registrations = plainRegs.map((r) => ({
-          ...r,
-          player: { display_name: playerMap.get(r.player_id) ?? "Unknown" },
+          sheet_id: r.sheet_id,
+          status: r.status,
+          player_id: r.player_id,
+          playerName: playerMap.get(r.player_id) ?? "Unknown",
         }));
       }
     } else {
-      registrations = data;
+      registrations = data.map((r: any) => ({
+        sheet_id: r.sheet_id,
+        status: r.status,
+        player_id: r.player_id,
+        playerName: r.player?.display_name ?? "Unknown",
+      }));
     }
   }
 
@@ -94,7 +101,7 @@ export default async function SheetsPage() {
     }
     if (!playersMap[r.sheet_id]) playersMap[r.sheet_id] = [];
     playersMap[r.sheet_id].push({
-      name: r.player?.display_name ?? "Unknown",
+      name: r.playerName,
       status: r.status,
     });
   });
