@@ -1,20 +1,18 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-const FIRST_NAMES = [
-  "Alex", "Jordan", "Taylor", "Casey", "Morgan", "Riley", "Quinn", "Avery",
-  "Cameron", "Drew", "Finley", "Harper", "Hayden", "Jesse", "Kai", "Lane",
-  "Micah", "Noel", "Parker", "Peyton", "Reese", "River", "Rowan", "Sage",
-  "Skyler", "Blake", "Charlie", "Dakota", "Emerson", "Frankie", "Gray",
-  "Harley", "Jaden", "Kendall", "Logan", "Mackenzie", "Oakley", "Phoenix", "Spencer",
-];
+// Allow up to 60 seconds for this admin route
+export const maxDuration = 60;
 
-const LAST_NAMES = [
-  "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-  "Rodriguez", "Martinez", "Anderson", "Thomas", "Jackson", "White", "Harris",
-  "Martin", "Thompson", "Moore", "Young", "Allen", "King", "Wright", "Scott",
-  "Torres", "Hill", "Green", "Adams", "Baker", "Nelson", "Carter", "Mitchell",
-  "Perez", "Roberts", "Turner", "Phillips", "Campbell", "Parker", "Evans", "Edwards",
+const TEST_USERS = [
+  "Alex Smith", "Jordan Johnson", "Taylor Williams", "Casey Brown", "Morgan Jones",
+  "Riley Garcia", "Quinn Miller", "Avery Davis", "Cameron Rodriguez", "Drew Martinez",
+  "Finley Anderson", "Harper Thomas", "Hayden Jackson", "Jesse White", "Kai Harris",
+  "Lane Martin", "Micah Thompson", "Noel Moore", "Parker Young", "Peyton Allen",
+  "Reese King", "River Wright", "Rowan Scott", "Sage Torres", "Skyler Hill",
+  "Blake Green", "Charlie Adams", "Dakota Baker", "Emerson Nelson", "Frankie Carter",
+  "Gray Mitchell", "Harley Perez", "Jaden Roberts", "Kendall Turner", "Logan Phillips",
+  "Mackenzie Campbell", "Oakley Parker", "Phoenix Evans", "Spencer Edwards",
 ];
 
 export async function POST(request: Request) {
@@ -68,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
   }
 
-  // Clean up any existing test data first
+  // Step 1: Clean up any existing test data
   const { data: existingTest } = await serviceClient
     .from("profiles")
     .select("id, user_id")
@@ -78,12 +76,12 @@ export async function POST(request: Request) {
     const existingIds = existingTest.map((p) => p.id);
     const existingAuthIds = existingTest.map((p) => p.user_id).filter(Boolean);
 
-    await Promise.all([
-      serviceClient.from("registrations").delete().in("player_id", existingIds),
-      serviceClient.from("group_memberships").delete().in("player_id", existingIds),
-    ]);
+    await serviceClient.from("registrations").delete().in("player_id", existingIds);
+    await serviceClient.from("group_memberships").delete().in("player_id", existingIds);
     await serviceClient.from("profiles").delete().in("id", existingIds);
-    await Promise.all(existingAuthIds.map((id) => serviceClient.auth.admin.deleteUser(id)));
+
+    // Delete auth users in parallel
+    await Promise.allSettled(existingAuthIds.map((id) => serviceClient.auth.admin.deleteUser(id)));
   }
 
   // Clean up orphaned test auth users
@@ -91,53 +89,55 @@ export async function POST(request: Request) {
   if (authUsers?.users) {
     const orphaned = authUsers.users.filter((u) => u.email?.endsWith("@test.local"));
     if (orphaned.length > 0) {
-      await Promise.all(orphaned.map((u) => serviceClient.auth.admin.deleteUser(u.id)));
+      await Promise.allSettled(orphaned.map((u) => serviceClient.auth.admin.deleteUser(u.id)));
     }
   }
 
-  // Create 39 test auth users in parallel
-  const userResults = await Promise.all(
-    FIRST_NAMES.map((firstName, i) => {
-      const lastName = LAST_NAMES[i];
-      const email = `test-${firstName.toLowerCase()}-${lastName.toLowerCase()}@test.local`;
-      return serviceClient.auth.admin.createUser({
-        email,
-        password: "testpassword123",
-        email_confirm: true,
-        user_metadata: { full_name: `${firstName} ${lastName}` },
-      });
-    })
-  );
-
-  // Collect successful auth users with their index
+  // Step 2: Create auth users in batches of 10 to avoid rate limits
+  const BATCH_SIZE = 10;
   const created: { userId: string; index: number; step: number; pct: number }[] = [];
-  for (let i = 0; i < userResults.length; i++) {
-    const { data: authUser, error: authErr } = userResults[i];
-    if (authErr || !authUser.user) {
-      console.error(`Failed to create auth user ${FIRST_NAMES[i]}:`, authErr?.message);
-      continue;
+
+  for (let batch = 0; batch < TEST_USERS.length; batch += BATCH_SIZE) {
+    const batchUsers = TEST_USERS.slice(batch, batch + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batchUsers.map((name, j) => {
+        const i = batch + j;
+        const [first, last] = name.split(" ");
+        const email = `test-${first.toLowerCase()}-${last.toLowerCase()}@test.local`;
+        return serviceClient.auth.admin.createUser({
+          email,
+          password: "testpassword123",
+          email_confirm: true,
+          user_metadata: { full_name: name },
+        });
+      })
+    );
+
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+      if (result.status === "fulfilled" && result.value.data?.user) {
+        created.push({
+          userId: result.value.data.user.id,
+          index: batch + j,
+          step: Math.floor(Math.random() * 6) + 1,
+          pct: Math.round((Math.random() * 40 + 50) * 10) / 10,
+        });
+      }
     }
-    created.push({
-      userId: authUser.user.id,
-      index: i,
-      step: Math.floor(Math.random() * 6) + 1,
-      pct: Math.round((Math.random() * 40 + 50) * 10) / 10,
-    });
   }
 
   if (created.length === 0) {
     return NextResponse.json({ error: "Failed to create any auth users" }, { status: 500 });
   }
 
-  // Bulk insert profiles
+  // Step 3: Bulk insert profiles
   const profileInserts = created.map((c) => {
-    const firstName = FIRST_NAMES[c.index];
-    const lastName = LAST_NAMES[c.index];
+    const [first, last] = TEST_USERS[c.index].split(" ");
     return {
       user_id: c.userId,
-      full_name: `${firstName} ${lastName}`,
-      display_name: `[TEST] ${firstName} ${lastName}`,
-      email: `test-${firstName.toLowerCase()}-${lastName.toLowerCase()}@test.local`,
+      full_name: `${first} ${last}`,
+      display_name: `[TEST] ${first} ${last}`,
+      email: `test-${first.toLowerCase()}-${last.toLowerCase()}@test.local`,
       role: "player" as const,
       is_active: true,
       member_since: new Date().toISOString(),
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No profiles created" }, { status: 500 });
   }
 
-  // Bulk insert group memberships + registrations in parallel
+  // Step 4: Create registrations and memberships
   const { count: existingConfirmed } = await serviceClient
     .from("registrations")
     .select("id", { count: "exact", head: true })
@@ -178,17 +178,6 @@ export async function POST(request: Request) {
     };
   });
 
-  const memberships = sheet.group_id
-    ? inserted.map((p, i) => ({
-        player_id: p.id,
-        group_id: sheet.group_id,
-        current_step: created[i].step,
-        win_pct: created[i].pct,
-        total_sessions: Math.floor(Math.random() * 20) + 1,
-        last_played_at: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
-      }))
-    : null;
-
   const { error: regErr } = await serviceClient
     .from("registrations")
     .insert(registrations);
@@ -197,7 +186,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: regErr.message }, { status: 500 });
   }
 
-  if (memberships) {
+  if (sheet.group_id) {
+    const memberships = inserted.map((p, i) => ({
+      player_id: p.id,
+      group_id: sheet.group_id,
+      current_step: created[i].step,
+      win_pct: created[i].pct,
+      total_sessions: Math.floor(Math.random() * 20) + 1,
+      last_played_at: new Date(Date.now() - Math.random() * 30 * 86400000).toISOString(),
+    }));
     await serviceClient.from("group_memberships").insert(memberships);
   }
 
