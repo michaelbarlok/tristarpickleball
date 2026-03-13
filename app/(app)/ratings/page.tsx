@@ -147,27 +147,27 @@ export default async function RatingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Rankings</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-dark-100">Rankings</h1>
+        <p className="text-sm text-surface-muted">
           Player rankings by step and scoring percentage (last {PCT_WINDOW_SESSIONS} sessions)
         </p>
       </div>
 
       <div className="card overflow-hidden p-0">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-surface-border">
+          <thead className="bg-surface-overlay">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 w-16">Rank</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Player</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Step</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Percentage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Last Active</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted w-16">Rank</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Step</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Percentage</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Last Active</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-surface-border bg-surface-raised">
             {ranked.map((r, i) => (
               <tr key={r.player_id}>
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-500">
+                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-surface-muted">
                   {i + 1}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
@@ -175,24 +175,24 @@ export default async function RatingsPage() {
                     {r.avatar_url ? (
                       <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm font-medium">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-sm font-medium">
                         {r.display_name?.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-dark-100">
                       {r.display_name}
                     </span>
                   </Link>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
-                  <span className="inline-flex items-center rounded-md bg-brand-50 px-2 py-1 text-sm font-semibold text-brand-700">
+                  <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-1 text-sm font-semibold text-brand-700">
                     {r.current_step}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-700">
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-dark-200">
                   {r.percentage > 0 ? `${r.percentage.toFixed(1)}%` : "—"}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-surface-muted">
                   {r.last_played_at
                     ? new Date(r.last_played_at).toLocaleDateString("en-US", {
                         month: "short",
@@ -204,7 +204,7 @@ export default async function RatingsPage() {
             ))}
             {ranked.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-8 text-center text-surface-muted">
                   No ranked players yet.
                 </td>
               </tr>

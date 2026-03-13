@@ -45,8 +45,8 @@ export default function InviteMemberPage() {
           &larr; Back to Members
         </Link>
         <div className="card text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">Invite Sent!</h2>
-          <p className="text-gray-600">
+          <h2 className="text-xl font-semibold text-dark-100">Invite Sent!</h2>
+          <p className="text-surface-muted">
             An invite email has been sent to <strong>{email}</strong>. They can
             click the link in the email to set up their account.
           </p>
@@ -79,10 +79,10 @@ export default function InviteMemberPage() {
         >
           &larr; Back to Members
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
+        <h1 className="mt-2 text-2xl font-bold text-dark-100">
           Invite Member
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-surface-muted">
           Send an email invitation to join PKL.
         </p>
       </div>
@@ -92,7 +92,7 @@ export default function InviteMemberPage() {
           <div>
             <label
               htmlFor="displayName"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-dark-200 mb-1"
             >
               Display Name
             </label>
@@ -110,7 +110,7 @@ export default function InviteMemberPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-dark-200 mb-1"
             >
               Email Address
             </label>
@@ -125,7 +125,7 @@ export default function InviteMemberPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? "Sending Invite..." : "Send Invite"}

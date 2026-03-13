@@ -57,11 +57,11 @@ export default function RegisterPage() {
 
   return (
     <div className="card">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Create account</h2>
+      <h2 className="text-xl font-semibold text-dark-100 mb-6">Create account</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="fullName" className="block text-sm font-medium text-dark-200 mb-1">
             Full Name
           </label>
           <input
@@ -75,7 +75,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-dark-200 mb-1">
             Email
           </label>
           <input
@@ -89,7 +89,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-dark-200 mb-1">
             Password
           </label>
           <input
@@ -112,7 +112,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-gray-600">
+      <p className="mt-4 text-center text-sm text-surface-muted">
         Already have an account?{" "}
         <Link href="/login" className="font-medium text-brand-600 hover:text-brand-500">
           Sign in

@@ -28,10 +28,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-dark-100">
           Welcome back, {profile?.display_name}
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-surface-muted">
           Here&apos;s what&apos;s happening in PKL.
         </p>
       </div>
@@ -39,20 +39,20 @@ export default async function DashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card">
-          <p className="text-sm text-gray-600">My Groups</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-surface-muted">My Groups</p>
+          <p className="mt-1 text-2xl font-bold text-dark-100">
             {memberships?.length ?? 0}
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Upcoming Events</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-surface-muted">Upcoming Events</p>
+          <p className="mt-1 text-2xl font-bold text-dark-100">
             {sheets?.length ?? 0}
           </p>
         </div>
         <div className="card">
-          <p className="text-sm text-gray-600">Member Since</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+          <p className="text-sm text-surface-muted">Member Since</p>
+          <p className="mt-1 text-2xl font-bold text-dark-100">
             {profile?.member_since
               ? new Date(profile.member_since).toLocaleDateString("en-US", {
                   month: "short",
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
       {/* My Groups */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">My Groups</h2>
+          <h2 className="text-lg font-semibold text-dark-100">My Groups</h2>
           <Link href="/groups" className="text-sm text-brand-600 hover:text-brand-500">
             Browse all groups
           </Link>
@@ -77,10 +77,10 @@ export default async function DashboardPage() {
               <Link
                 key={m.group_id}
                 href={`/groups/${m.group?.slug}`}
-                className="card hover:ring-brand-300 transition-shadow"
+                className="card hover:ring-brand-500/30 transition-shadow"
               >
-                <h3 className="font-semibold text-gray-900">{m.group?.name}</h3>
-                <div className="mt-2 flex gap-4 text-sm text-gray-600">
+                <h3 className="font-semibold text-dark-100">{m.group?.name}</h3>
+                <div className="mt-2 flex gap-4 text-sm text-surface-muted">
                   <span>Step {m.current_step}</span>
                   <span>{m.win_pct}% Win</span>
                   <span>{m.total_sessions} sessions</span>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="card text-center text-gray-500">
+          <div className="card text-center text-surface-muted">
             <p>You haven&apos;t joined any groups yet.</p>
             <Link href="/groups" className="mt-2 inline-block text-brand-600 hover:text-brand-500">
               Browse available groups
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
       {/* Upcoming Sign-Up Sheets */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Upcoming Events</h2>
+          <h2 className="text-lg font-semibold text-dark-100">Upcoming Events</h2>
           <Link href="/sheets" className="text-sm text-brand-600 hover:text-brand-500">
             View all sheets
           </Link>
@@ -112,13 +112,13 @@ export default async function DashboardPage() {
               <Link
                 key={sheet.id}
                 href={`/sheets/${sheet.id}`}
-                className="card flex items-center justify-between hover:ring-brand-300 transition-shadow"
+                className="card flex items-center justify-between hover:ring-brand-500/30 transition-shadow"
               >
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-dark-100">
                     {sheet.group?.name ?? "Event"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-surface-muted">
                     {new Date(sheet.event_date).toLocaleDateString("en-US", {
                       weekday: "short",
                       month: "short",
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="card text-center text-gray-500">
+          <div className="card text-center text-surface-muted">
             No upcoming events.
           </div>
         )}

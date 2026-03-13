@@ -16,12 +16,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  created: "bg-gray-100 text-gray-700",
-  checking_in: "bg-yellow-100 text-yellow-700",
-  seeding: "bg-blue-100 text-blue-700",
-  round_active: "bg-green-100 text-green-700",
-  round_complete: "bg-purple-100 text-purple-700",
-  session_complete: "bg-gray-100 text-gray-700",
+  created: "bg-surface-overlay text-dark-200",
+  checking_in: "bg-accent-900/40 text-accent-300",
+  seeding: "bg-brand-900/40 text-brand-300",
+  round_active: "bg-teal-900/30 text-teal-300",
+  round_complete: "bg-brand-900/40 text-brand-300",
+  session_complete: "bg-surface-overlay text-dark-200",
 };
 
 // ============================================================
@@ -309,8 +309,8 @@ export default function PlayerSessionPage() {
     [myCourtPlayers, playerNames, myCourtScores, myCourt]
   );
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading session...</div>;
-  if (!session) return <div className="text-center py-12 text-gray-500">Session not found.</div>;
+  if (loading) return <div className="text-center py-12 text-surface-muted">Loading session...</div>;
+  if (!session) return <div className="text-center py-12 text-surface-muted">Session not found.</div>;
 
   const isActive = session.status === "round_active" || session.status === "round_complete";
 
@@ -318,8 +318,8 @@ export default function PlayerSessionPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{session.group?.name}</h1>
-        <p className="text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-dark-100">{session.group?.name}</h1>
+        <p className="text-sm text-surface-muted">
           {session.sheet?.event_date &&
             new Date(session.sheet.event_date).toLocaleDateString("en-US", {
               weekday: "long",
@@ -332,17 +332,17 @@ export default function PlayerSessionPage() {
 
       {/* Status + Round */}
       <div className="flex items-center gap-4">
-        <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${STATUS_COLORS[session.status] ?? "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${STATUS_COLORS[session.status] ?? "bg-surface-overlay text-dark-200"}`}>
           {STATUS_LABELS[session.status] ?? session.status}
         </span>
         {session.num_courts > 0 && (
-          <span className="text-sm text-gray-600">{session.num_courts} courts</span>
+          <span className="text-sm text-surface-muted">{session.num_courts} courts</span>
         )}
       </div>
 
       {/* My Court Assignment */}
       {myCourt != null && (
-        <div className="card bg-brand-50 border border-brand-200">
+        <div className="card bg-brand-900/40 border border-brand-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-brand-700">Your Court</p>
@@ -360,35 +360,35 @@ export default function PlayerSessionPage() {
       {/* Live Standings Table */}
       {myCourt != null && standings.length > 0 && myCourtScores.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Standings — Court {myCourt}</h2>
+          <h2 className="text-lg font-semibold text-dark-100 mb-3">Standings — Court {myCourt}</h2>
           <div className="card overflow-hidden p-0">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-surface-border">
+              <thead className="bg-surface-overlay">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500 w-10">#</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Player</th>
-                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-gray-500">W</th>
-                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-gray-500">L</th>
-                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-gray-500">+/-</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted w-10">#</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
+                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">W</th>
+                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">L</th>
+                  <th className="px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">+/-</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-surface-border bg-surface-raised">
                 {standings.map((s, i) => (
                   <tr
                     key={s.playerId}
-                    className={s.playerId === myPlayerId ? "bg-brand-50" : ""}
+                    className={s.playerId === myPlayerId ? "bg-brand-900/40" : ""}
                   >
-                    <td className="px-4 py-2 text-sm font-medium text-gray-500">{i + 1}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                    <td className="px-4 py-2 text-sm font-medium text-surface-muted">{i + 1}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-dark-100">
                       {s.displayName}
                       {s.playerId === myPlayerId && (
                         <span className="ml-1 text-xs text-brand-600">(you)</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-center text-sm font-semibold text-green-700">{s.wins}</td>
-                    <td className="px-4 py-2 text-center text-sm font-semibold text-red-600">{s.losses}</td>
+                    <td className="px-4 py-2 text-center text-sm font-semibold text-teal-300">{s.wins}</td>
+                    <td className="px-4 py-2 text-center text-sm font-semibold text-red-400">{s.losses}</td>
                     <td className="px-4 py-2 text-center text-sm font-semibold">
-                      <span className={s.pointDiff > 0 ? "text-green-700" : s.pointDiff < 0 ? "text-red-600" : "text-gray-500"}>
+                      <span className={s.pointDiff > 0 ? "text-teal-300" : s.pointDiff < 0 ? "text-red-400" : "text-surface-muted"}>
                         {s.pointDiff > 0 ? "+" : ""}{s.pointDiff}
                       </span>
                     </td>
@@ -403,34 +403,34 @@ export default function PlayerSessionPage() {
       {/* Match Schedule */}
       {myCourt != null && matchSchedule.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Match Schedule</h2>
+          <h2 className="text-lg font-semibold text-dark-100 mb-3">Match Schedule</h2>
           <div className="space-y-2">
             {matchSchedule.map((match) => (
               <div
                 key={match.gameNumber}
                 className={`flex items-center justify-between rounded-lg px-4 py-3 ${
-                  match.result ? "bg-gray-50" : "bg-white border border-gray-200"
+                  match.result ? "bg-surface-overlay" : "bg-surface-raised border border-surface-border"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-400 w-8">
+                  <span className="text-xs font-medium text-surface-muted w-8">
                     G{match.gameNumber}
                   </span>
-                  <span className="text-sm text-gray-900">
+                  <span className="text-sm text-dark-100">
                     {formatTeam(match.team1, playerNames)}
                   </span>
-                  <span className="text-xs text-gray-400">vs</span>
-                  <span className="text-sm text-gray-900">
+                  <span className="text-xs text-surface-muted">vs</span>
+                  <span className="text-sm text-dark-100">
                     {formatTeam(match.team2, playerNames)}
                   </span>
                 </div>
                 <div>
                   {match.result ? (
-                    <span className="font-mono text-sm font-semibold text-gray-700">
+                    <span className="font-mono text-sm font-semibold text-dark-200">
                       {match.result.scoreA} – {match.result.scoreB}
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-400">Pending</span>
+                    <span className="text-xs text-surface-muted">Pending</span>
                   )}
                 </div>
               </div>
@@ -441,33 +441,33 @@ export default function PlayerSessionPage() {
 
       {/* Session status messages */}
       {session.status === "created" && (
-        <div className="card text-center text-gray-500">
+        <div className="card text-center text-surface-muted">
           <p>This session hasn&apos;t started yet. Check-in will open soon.</p>
         </div>
       )}
       {session.status === "checking_in" && !myCourt && (
-        <div className="card text-center text-gray-500">
+        <div className="card text-center text-surface-muted">
           <p>Check-in is open. Please check in with the session organizer.</p>
         </div>
       )}
       {session.status === "seeding" && (
-        <div className="card text-center text-gray-500">
+        <div className="card text-center text-surface-muted">
           <p>Courts are being assigned. Your court number will appear here shortly.</p>
         </div>
       )}
       {session.status === "session_complete" && (
         <div className="card text-center">
-          <p className="text-gray-700 font-medium">Session complete!</p>
+          <p className="text-dark-200 font-medium">Session complete!</p>
           {participants.find((p) => p.player_id === myPlayerId) && (() => {
             const me = participants.find((p) => p.player_id === myPlayerId);
             if (!me || me.step_after == null) return null;
             const diff = me.step_before - me.step_after;
             return (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-surface-muted">
                 Your step: {me.step_before} → {me.step_after}
-                {diff > 0 && <span className="text-green-600 font-medium"> (moved up {diff})</span>}
-                {diff < 0 && <span className="text-red-600 font-medium"> (moved down {Math.abs(diff)})</span>}
-                {diff === 0 && <span className="text-gray-500"> (no change)</span>}
+                {diff > 0 && <span className="text-teal-300 font-medium"> (moved up {diff})</span>}
+                {diff < 0 && <span className="text-red-400 font-medium"> (moved down {Math.abs(diff)})</span>}
+                {diff === 0 && <span className="text-surface-muted"> (no change)</span>}
               </p>
             );
           })()}

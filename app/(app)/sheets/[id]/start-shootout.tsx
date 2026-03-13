@@ -102,12 +102,12 @@ export function StartShootout({
         {starting ? "Starting..." : "Start Shootout"}
       </button>
       {confirmedPlayerIds.length < 4 && (
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-surface-muted">
           Need at least 4 confirmed players
         </p>
       )}
       {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
+        <p className="mt-2 text-sm text-red-400">{error}</p>
       )}
     </div>
   );

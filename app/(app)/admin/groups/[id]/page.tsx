@@ -215,14 +215,14 @@ export default function AdminGroupDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-surface-muted">Loading...</p>
       </div>
     );
   }
 
   if (!group) {
     return (
-      <div className="card text-center text-gray-500">
+      <div className="card text-center text-surface-muted">
         Group not found.
       </div>
     );
@@ -235,13 +235,13 @@ export default function AdminGroupDetailPage() {
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => router.push("/admin/groups")}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-surface-muted hover:text-dark-200"
           >
             Groups
           </button>
-          <span className="text-gray-400">/</span>
+          <span className="text-surface-muted">/</span>
         </div>
-        <h1 className="mt-1 text-2xl font-bold text-gray-900">{group.name}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-dark-100">{group.name}</h1>
       </div>
 
       {/* Status Message */}
@@ -250,8 +250,8 @@ export default function AdminGroupDetailPage() {
           className={cn(
             "rounded-lg px-4 py-3 text-sm",
             message.type === "success"
-              ? "bg-green-50 text-green-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-teal-900/30 text-teal-300"
+              : "bg-red-900/30 text-red-400"
           )}
         >
           {message.text}
@@ -259,14 +259,14 @@ export default function AdminGroupDetailPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-surface-border">
         <button
           onClick={() => setActiveTab("members")}
           className={cn(
             "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
             activeTab === "members"
               ? "border-brand-600 text-brand-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-surface-muted hover:text-dark-200"
           )}
         >
           Members ({members.length})
@@ -277,7 +277,7 @@ export default function AdminGroupDetailPage() {
             "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
             activeTab === "preferences"
               ? "border-brand-600 text-brand-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-surface-muted hover:text-dark-200"
           )}
         >
           Preferences
@@ -310,7 +310,7 @@ export default function AdminGroupDetailPage() {
                     filteredPlayers.slice(0, 20).map((player) => (
                       <div
                         key={player.id}
-                        className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50"
+                        className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-surface-overlay"
                       >
                         <div className="flex items-center gap-3">
                           {player.avatar_url ? (
@@ -320,15 +320,15 @@ export default function AdminGroupDetailPage() {
                               className="h-8 w-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-overlay text-xs font-medium text-surface-muted">
                               {player.display_name.charAt(0)}
                             </div>
                           )}
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-dark-100">
                               {player.display_name}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-surface-muted">
                               {player.email}
                             </p>
                           </div>
@@ -342,7 +342,7 @@ export default function AdminGroupDetailPage() {
                       </div>
                     ))
                   ) : (
-                    <p className="py-2 text-center text-sm text-gray-500">
+                    <p className="py-2 text-center text-sm text-surface-muted">
                       {searchQuery
                         ? "No matching players found."
                         : "All active players are already members."}
@@ -355,27 +355,27 @@ export default function AdminGroupDetailPage() {
 
           {/* Members List */}
           <div className="card overflow-hidden p-0">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-surface-border">
+              <thead className="bg-surface-overlay">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Player
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Step
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Win %
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Joined
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
+              <tbody className="divide-y divide-surface-border bg-surface-raised">
                 {members.map((member) => (
                   <tr key={member.player_id}>
                     <td className="whitespace-nowrap px-4 py-3">
@@ -387,21 +387,21 @@ export default function AdminGroupDetailPage() {
                             className="h-8 w-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-overlay text-xs font-medium text-surface-muted">
                             {member.player?.display_name?.charAt(0) ?? "?"}
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-dark-100">
                             {member.player?.display_name}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-surface-muted">
                             {member.player?.email}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
                       <input
                         type="number"
                         min={1}
@@ -424,13 +424,13 @@ export default function AdminGroupDetailPage() {
                             updateStep(member.player_id, val);
                           }
                         }}
-                        className="w-16 rounded border border-gray-300 px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                        className="w-16 rounded border border-surface-border px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                       />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
                       {member.win_pct}%
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500">
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-surface-muted">
                       {new Date(member.joined_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -440,7 +440,7 @@ export default function AdminGroupDetailPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-right">
                       <button
                         onClick={() => removeMember(member.player_id)}
-                        className="text-sm text-red-600 hover:text-red-500"
+                        className="text-sm text-red-400 hover:text-red-500"
                       >
                         Remove
                       </button>
@@ -451,7 +451,7 @@ export default function AdminGroupDetailPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-8 text-center text-sm text-gray-500"
+                      className="px-4 py-8 text-center text-sm text-surface-muted"
                     >
                       No members yet. Add players above.
                     </td>
@@ -468,7 +468,7 @@ export default function AdminGroupDetailPage() {
         <form onSubmit={savePreferences} className="card space-y-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Win % Window (sessions)
               </label>
               <input
@@ -478,13 +478,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Number of recent sessions used to calculate win percentage.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 New Player Start Step
               </label>
               <input
@@ -494,13 +494,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Step assigned to players when they first join the group.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Highest Step
               </label>
               <input
@@ -510,13 +510,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 The best position on the ladder (1 = top).
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Lowest Step
               </label>
               <input
@@ -526,13 +526,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 The lowest number step a player can drop to.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Step Move Up
               </label>
               <input
@@ -542,13 +542,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Steps gained by finishing 1st in a pool.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Step Move Down
               </label>
               <input
@@ -558,13 +558,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Steps lost by finishing last in a pool.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Four Player Score Limit
               </label>
               <input
@@ -574,13 +574,13 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Games to {preferences.game_limit_4p} in a 4-player pool.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-dark-200">
                 Five Player Score Limit
               </label>
               <input
@@ -590,7 +590,7 @@ export default function AdminGroupDetailPage() {
                 min={1}
                 className="input mt-1 w-full"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-surface-muted">
                 Games to {preferences.game_limit_5p} in a 5-player pool.
               </p>
             </div>
@@ -601,9 +601,9 @@ export default function AdminGroupDetailPage() {
                 name="win_by_2"
                 id="win_by_2"
                 defaultChecked={preferences.win_by_2}
-                className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                className="h-4 w-4 rounded border-surface-border text-brand-600 focus:ring-brand-500"
               />
-              <label htmlFor="win_by_2" className="text-sm font-medium text-gray-700">
+              <label htmlFor="win_by_2" className="text-sm font-medium text-dark-200">
                 Win by 2 required
               </label>
             </div>

@@ -126,10 +126,10 @@ export default async function SheetDetailPage({
           >
             &larr; All Sheets
           </Link>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+          <h1 className="mt-2 text-2xl font-bold text-dark-100">
             {sheet.group?.name ?? "Event"}
           </h1>
-          <p className="mt-1 text-gray-600">{sheet.location}</p>
+          <p className="mt-1 text-surface-muted">{sheet.location}</p>
         </div>
         <div>
           {sheet.status === "open" && <span className="badge-green">Open</span>}
@@ -143,7 +143,7 @@ export default async function SheetDetailPage({
       </div>
 
       {isCancelled && (
-        <div className="rounded-md bg-red-50 p-4 text-red-800">
+        <div className="rounded-md bg-red-900/30 p-4 text-red-300">
           This event has been cancelled.
         </div>
       )}
@@ -152,47 +152,47 @@ export default async function SheetDetailPage({
       <div className="card">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <p className="text-sm font-medium text-gray-500">Date</p>
-            <p className="mt-1 text-gray-900">{formatDate(sheet.event_date)}</p>
+            <p className="text-sm font-medium text-surface-muted">Date</p>
+            <p className="mt-1 text-dark-100">{formatDate(sheet.event_date)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Time</p>
-            <p className="mt-1 text-gray-900">{formatTime(sheet.event_time)}</p>
+            <p className="text-sm font-medium text-surface-muted">Time</p>
+            <p className="mt-1 text-dark-100">{formatTime(sheet.event_time)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Location</p>
-            <p className="mt-1 text-gray-900">{sheet.location}</p>
+            <p className="text-sm font-medium text-surface-muted">Location</p>
+            <p className="mt-1 text-dark-100">{sheet.location}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Group</p>
-            <p className="mt-1 text-gray-900">{sheet.group?.name ?? "N/A"}</p>
+            <p className="text-sm font-medium text-surface-muted">Group</p>
+            <p className="mt-1 text-dark-100">{sheet.group?.name ?? "N/A"}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Player Limit</p>
-            <p className="mt-1 text-gray-900">
+            <p className="text-sm font-medium text-surface-muted">Player Limit</p>
+            <p className="mt-1 text-dark-100">
               {confirmed.length}/{sheet.player_limit}
               {waitlisted.length > 0 && (
-                <span className="ml-2 text-sm text-gray-500">
+                <span className="ml-2 text-sm text-surface-muted">
                   (+{waitlisted.length} waitlisted)
                 </span>
               )}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-sm font-medium text-surface-muted">
               Sign-Up Closes
             </p>
-            <p className="mt-1 text-gray-900">
+            <p className="mt-1 text-dark-100">
               {formatDate(sheet.signup_closes_at)},{" "}
               {formatTime(sheet.signup_closes_at)}
             </p>
           </div>
           {sheet.withdraw_closes_at && (
             <div>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-surface-muted">
                 Withdraw Deadline
               </p>
-              <p className="mt-1 text-gray-900">
+              <p className="mt-1 text-dark-100">
                 {formatDate(sheet.withdraw_closes_at)},{" "}
                 {formatTime(sheet.withdraw_closes_at)}
               </p>
@@ -202,8 +202,8 @@ export default async function SheetDetailPage({
 
         {sheet.notes && (
           <div className="mt-4 border-t pt-4">
-            <p className="text-sm font-medium text-gray-500">Notes</p>
-            <p className="mt-1 text-gray-700">{sheet.notes}</p>
+            <p className="text-sm font-medium text-surface-muted">Notes</p>
+            <p className="mt-1 text-dark-200">{sheet.notes}</p>
           </div>
         )}
       </div>
@@ -240,16 +240,16 @@ export default async function SheetDetailPage({
 
       {/* Players */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+        <h2 className="text-lg font-semibold text-dark-100 mb-3">
           Players ({confirmed.length}/{sheet.player_limit})
           {waitlisted.length > 0 && (
-            <span className="ml-2 text-sm font-normal text-gray-500">
+            <span className="ml-2 text-sm font-normal text-surface-muted">
               +{waitlisted.length} waitlisted
             </span>
           )}
         </h2>
         {confirmed.length > 0 || waitlisted.length > 0 ? (
-          <div className="card divide-y divide-gray-100 max-h-[32rem] overflow-y-auto">
+          <div className="card divide-y divide-surface-border max-h-[32rem] overflow-y-auto">
             {confirmed.map((reg: Registration & { player?: Profile }) => (
               <div
                 key={reg.id}
@@ -262,11 +262,11 @@ export default async function SheetDetailPage({
                     className="h-8 w-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-overlay text-sm font-medium text-surface-muted">
                     {reg.player?.display_name?.charAt(0) ?? "?"}
                   </div>
                 )}
-                <span className="text-gray-900">
+                <span className="text-dark-100">
                   {reg.player?.display_name ?? "Unknown"}
                 </span>
                 {reg.player?.skill_level && (
@@ -279,7 +279,7 @@ export default async function SheetDetailPage({
             {waitlisted.length > 0 && (
               <>
                 <div className="py-2">
-                  <span className="text-xs font-medium uppercase text-gray-400">
+                  <span className="text-xs font-medium uppercase text-surface-muted">
                     Waitlist
                   </span>
                 </div>
@@ -289,7 +289,7 @@ export default async function SheetDetailPage({
                       key={reg.id}
                       className="flex items-center gap-3 py-3"
                     >
-                      <span className="text-sm font-medium text-gray-400 w-6 text-right">
+                      <span className="text-sm font-medium text-surface-muted w-6 text-right">
                         {idx + 1}.
                       </span>
                       {reg.player?.avatar_url ? (
@@ -299,11 +299,11 @@ export default async function SheetDetailPage({
                           className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-overlay text-sm font-medium text-surface-muted">
                           {reg.player?.display_name?.charAt(0) ?? "?"}
                         </div>
                       )}
-                      <span className="text-gray-900">
+                      <span className="text-dark-100">
                         {reg.player?.display_name ?? "Unknown"}
                       </span>
                       <span className="badge-yellow text-xs">Waitlisted</span>
@@ -314,7 +314,7 @@ export default async function SheetDetailPage({
             )}
           </div>
         ) : (
-          <div className="card text-center text-gray-500">
+          <div className="card text-center text-surface-muted">
             No players signed up yet.
           </div>
         )}
