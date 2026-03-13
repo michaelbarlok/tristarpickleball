@@ -1,16 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { formatDate, formatShortDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { SignupSheet } from "@/types/database";
-import { QuickSignUp } from "./quick-signup";
+import { SheetCard } from "./sheet-card";
 
 export const dynamic = "force-dynamic";
-
-const statusBadge: Record<string, { className: string; label: string }> = {
-  open: { className: "badge-green", label: "Open" },
-  closed: { className: "badge-yellow", label: "Closed" },
-  cancelled: { className: "badge-red", label: "Cancelled" },
-};
 
 export default async function SheetsPage() {
   const supabase = await createClient();
@@ -48,20 +41,41 @@ export default async function SheetsPage() {
     return new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
   });
 
-  // Fetch registration counts per sheet
+  // Fetch registrations with player names per sheet
   const sheetIds = (sheets ?? []).map((s: SignupSheet) => s.id);
-  const { data: regCounts } = await supabase
+  const { data: registrations } = await supabase
     .from("registrations")
-    .select("sheet_id, status")
+    .select("sheet_id, status, priority, signed_up_at, player:profiles!registrations_player_id_fkey(display_name)")
     .in("sheet_id", sheetIds.length > 0 ? sheetIds : ["__none__"])
-    .in("status", ["confirmed", "waitlist"]);
+    .in("status", ["confirmed", "waitlist"])
+    .order("signed_up_at", { ascending: true });
 
-  const countMap: Record<string, number> = {};
-  (regCounts ?? []).forEach((r: { sheet_id: string; status: string }) => {
+  // Build per-sheet data: confirmed count, waitlist count, player list
+  const confirmedCountMap: Record<string, number> = {};
+  const waitlistCountMap: Record<string, number> = {};
+  const playersMap: Record<string, { name: string; status: string }[]> = {};
+
+  const priorityOrder: Record<string, number> = { high: 0, normal: 1, low: 2 };
+  (registrations ?? []).forEach((r: any) => {
     if (r.status === "confirmed") {
-      countMap[r.sheet_id] = (countMap[r.sheet_id] ?? 0) + 1;
+      confirmedCountMap[r.sheet_id] = (confirmedCountMap[r.sheet_id] ?? 0) + 1;
+    } else {
+      waitlistCountMap[r.sheet_id] = (waitlistCountMap[r.sheet_id] ?? 0) + 1;
     }
+    if (!playersMap[r.sheet_id]) playersMap[r.sheet_id] = [];
+    playersMap[r.sheet_id].push({
+      name: r.player?.display_name ?? "Unknown",
+      status: r.status,
+    });
   });
+
+  // Sort players: confirmed first (by priority then signup time), then waitlisted
+  for (const sheetId of Object.keys(playersMap)) {
+    playersMap[sheetId].sort((a, b) => {
+      if (a.status !== b.status) return a.status === "confirmed" ? -1 : 1;
+      return 0; // already ordered by signed_up_at from query
+    });
+  }
 
   // Fetch current user's registrations
   const myRegMap: Record<string, string> = {};
@@ -77,6 +91,34 @@ export default async function SheetsPage() {
     });
   }
 
+  const activeSheets = sortedSheets.filter((s) => s.status !== "cancelled");
+  const cancelledSheets = sortedSheets.filter((s) => s.status === "cancelled");
+
+  const renderCard = (sheet: SignupSheet & { group?: { id: string; name: string; slug: string } }) => {
+    const confirmed = confirmedCountMap[sheet.id] ?? 0;
+    const waitlisted = waitlistCountMap[sheet.id] ?? 0;
+    const players = playersMap[sheet.id] ?? [];
+    const myStatus = myRegMap[sheet.id] ?? null;
+    const signupClosed = new Date(sheet.signup_closes_at) < new Date();
+
+    return (
+      <SheetCard
+        key={sheet.id}
+        sheetId={sheet.id}
+        groupName={sheet.group?.name ?? "Event"}
+        status={sheet.status}
+        eventDate={formatDate(sheet.event_date)}
+        location={sheet.location}
+        playerLimit={sheet.player_limit}
+        confirmedCount={confirmed}
+        waitlistCount={waitlisted}
+        players={players}
+        myStatus={myStatus}
+        signupClosed={signupClosed}
+      />
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -88,75 +130,20 @@ export default async function SheetsPage() {
           No sign-up sheets available yet.
         </div>
       ) : (
-        <>
-          {(() => {
-            const activeSheets = sortedSheets.filter((s) => s.status !== "cancelled");
-            const cancelledSheets = sortedSheets.filter((s) => s.status === "cancelled");
-
-            const renderCard = (sheet: SignupSheet & { group?: { id: string; name: string; slug: string } }) => {
-              const badge = statusBadge[sheet.status] ?? statusBadge.closed;
-              const registered = countMap[sheet.id] ?? 0;
-              const myStatus = myRegMap[sheet.id];
-              const isOpen = sheet.status === "open";
-              const signupClosed = new Date(sheet.signup_closes_at) < new Date();
-
-              return (
-                <div
-                  key={sheet.id}
-                  className="card flex items-center justify-between hover:ring-brand-500/30 transition-shadow"
-                >
-                  <Link
-                    href={`/sheets/${sheet.id}`}
-                    className="min-w-0 flex-1"
-                  >
-                    <div className="flex items-center gap-3">
-                      <p className="font-semibold text-dark-100">
-                        {sheet.group?.name ?? "Event"}
-                      </p>
-                      <span className={badge.className}>{badge.label}</span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-surface-muted">
-                      <span>{formatDate(sheet.event_date)}</span>
-                      <span>{sheet.location}</span>
-                    </div>
-                  </Link>
-                  <div className="ml-4 flex items-center gap-3 shrink-0">
-                    <div className="text-right text-sm text-surface-muted">
-                      <span className="font-medium text-dark-100">
-                        {registered}
-                      </span>
-                      /{sheet.player_limit} players
-                    </div>
-                    {myStatus ? (
-                      <span className={myStatus === "confirmed" ? "badge-green" : "badge-yellow"}>
-                        {myStatus === "confirmed" ? "Signed Up" : "Waitlisted"}
-                      </span>
-                    ) : isOpen && !signupClosed ? (
-                      <QuickSignUp sheetId={sheet.id} />
-                    ) : null}
-                  </div>
-                </div>
-              );
-            };
-
-            return (
-              <div className="space-y-6">
-                {activeSheets.length > 0 && (
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-semibold text-dark-100">Active</h2>
-                    {activeSheets.map(renderCard)}
-                  </div>
-                )}
-                {cancelledSheets.length > 0 && (
-                  <div className="space-y-3">
-                    <h2 className="text-lg font-semibold text-surface-muted">Cancelled</h2>
-                    {cancelledSheets.map(renderCard)}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </>
+        <div className="space-y-6">
+          {activeSheets.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-dark-100">Active</h2>
+              {activeSheets.map(renderCard)}
+            </div>
+          )}
+          {cancelledSheets.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-surface-muted">Cancelled</h2>
+              {cancelledSheets.map(renderCard)}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
