@@ -41,6 +41,14 @@ export default async function AdminSheetsPage() {
     );
   }
 
+  // Sort: active sheets first (most recent on top), then cancelled (most recent on top)
+  const sortedSheets = [...(sheets ?? [])].sort((a, b) => {
+    const aCancelled = a.status === "cancelled" ? 1 : 0;
+    const bCancelled = b.status === "cancelled" ? 1 : 0;
+    if (aCancelled !== bCancelled) return aCancelled - bCancelled;
+    return new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
+  });
+
   // Fetch registration counts
   const sheetIds = (sheets ?? []).map((s: SignupSheet) => s.id);
   const { data: regRows } = await supabase
@@ -69,7 +77,7 @@ export default async function AdminSheetsPage() {
         </Link>
       </div>
 
-      {!sheets || sheets.length === 0 ? (
+      {!sortedSheets || sortedSheets.length === 0 ? (
         <div className="card text-center text-surface-muted">
           No sign-up sheets created yet.
         </div>
@@ -87,7 +95,7 @@ export default async function AdminSheetsPage() {
               </tr>
             </thead>
             <tbody>
-              {sheets.map(
+              {sortedSheets.map(
                 (
                   sheet: SignupSheet & {
                     group?: { id: string; name: string };

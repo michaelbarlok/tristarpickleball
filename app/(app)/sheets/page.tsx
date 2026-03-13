@@ -40,6 +40,14 @@ export default async function SheetsPage() {
     );
   }
 
+  // Sort: active sheets first (most recent on top), then cancelled (most recent on top)
+  const sortedSheets = [...(sheets ?? [])].sort((a, b) => {
+    const aCancelled = a.status === "cancelled" ? 1 : 0;
+    const bCancelled = b.status === "cancelled" ? 1 : 0;
+    if (aCancelled !== bCancelled) return aCancelled - bCancelled;
+    return new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
+  });
+
   // Fetch registration counts per sheet
   const sheetIds = (sheets ?? []).map((s: SignupSheet) => s.id);
   const { data: regCounts } = await supabase
@@ -75,13 +83,13 @@ export default async function SheetsPage() {
         <h1 className="text-2xl font-bold text-dark-100">Sign-Up Sheets</h1>
       </div>
 
-      {!sheets || sheets.length === 0 ? (
+      {!sortedSheets || sortedSheets.length === 0 ? (
         <div className="card text-center text-surface-muted">
           No sign-up sheets available yet.
         </div>
       ) : (
         <div className="space-y-3">
-          {sheets.map((sheet: SignupSheet & { group?: { id: string; name: string; slug: string } }) => {
+          {sortedSheets.map((sheet: SignupSheet & { group?: { id: string; name: string; slug: string } }) => {
             const badge = statusBadge[sheet.status] ?? statusBadge.closed;
             const registered = countMap[sheet.id] ?? 0;
             const myStatus = myRegMap[sheet.id];
