@@ -139,20 +139,9 @@ export default function CheckInPage() {
     try {
       let positions;
 
-      const anyHasCourt = checkedIn.some((p) => p.court_number != null);
       const isSessionContinuation = session.is_same_day_continuation && session.prev_session_id;
 
-      if (anyHasCourt) {
-        // Re-seed: use current court assignments as primary sort, win% as tiebreaker
-        positions = seedByCourtOrder(
-          checkedIn.map((p) => ({
-            id: p.player_id,
-            courtNumber: p.court_number ?? 999,
-            winPct: p.win_pct,
-          })),
-          session.num_courts
-        );
-      } else if (isSessionContinuation) {
+      if (isSessionContinuation) {
         // Session 2+ first seed: sort by previous court (target_court_next), win% tiebreaker
         positions = seedByCourtOrder(
           checkedIn.map((p) => ({
@@ -163,7 +152,7 @@ export default function CheckInPage() {
           session.num_courts
         );
       } else {
-        // Session 1 first seed: standard ranking sheet sort (Step ASC → Win% DESC → ...)
+        // Standard ranking sheet sort: Step ASC → Win% DESC → Last Played → Sessions
         const rankedPlayers: RankedPlayer[] = checkedIn.map((p) => ({
           id: p.player_id,
           currentStep: p.current_step,
@@ -189,7 +178,7 @@ export default function CheckInPage() {
 
       await Promise.all(updates);
 
-      // Update local state and sort by court number, then win%
+      // Update local state and sort by court number, then step ASC, then win% DESC
       const posMap = new Map(positions.map((p) => [p.playerId, p.courtNumber]));
       setParticipants((prev) => {
         const updated = prev.map((p) => {
@@ -200,6 +189,7 @@ export default function CheckInPage() {
           const aCourt = a.court_number ?? 999;
           const bCourt = b.court_number ?? 999;
           if (aCourt !== bCourt) return aCourt - bCourt;
+          if (a.current_step !== b.current_step) return a.current_step - b.current_step;
           return b.win_pct - a.win_pct;
         });
       });
