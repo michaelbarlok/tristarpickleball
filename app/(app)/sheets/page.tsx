@@ -46,11 +46,11 @@ export default async function SheetsPage() {
   const safeSheetIds = sheetIds.length > 0 ? sheetIds : ["__none__"];
 
   // Try with player join first, fall back to plain + separate profiles query
-  let registrations: { sheet_id: string; status: string; player_id: string; playerName: string }[] = [];
+  let registrations: { sheet_id: string; status: string; player_id: string; playerName: string; avatarUrl: string | null }[] = [];
   {
     const { data, error: regError } = await supabase
       .from("registrations")
-      .select("sheet_id, status, player_id, player:profiles!registrations_player_id_fkey(display_name)")
+      .select("sheet_id, status, player_id, player:profiles!registrations_player_id_fkey(display_name, avatar_url)")
       .in("sheet_id", safeSheetIds)
       .in("status", ["confirmed", "waitlist"])
       .order("signed_up_at", { ascending: true });
@@ -68,15 +68,19 @@ export default async function SheetsPage() {
         const playerIds = [...new Set(plainRegs.map((r) => r.player_id))];
         const { data: players } = await supabase
           .from("profiles")
-          .select("id, display_name")
+          .select("id, display_name, avatar_url")
           .in("id", playerIds);
-        const playerMap = new Map((players ?? []).map((p) => [p.id, p.display_name]));
-        registrations = plainRegs.map((r) => ({
-          sheet_id: r.sheet_id,
-          status: r.status,
-          player_id: r.player_id,
-          playerName: playerMap.get(r.player_id) ?? "Unknown",
-        }));
+        const playerMap = new Map((players ?? []).map((p) => [p.id, p]));
+        registrations = plainRegs.map((r) => {
+          const player = playerMap.get(r.player_id);
+          return {
+            sheet_id: r.sheet_id,
+            status: r.status,
+            player_id: r.player_id,
+            playerName: player?.display_name ?? "Unknown",
+            avatarUrl: player?.avatar_url ?? null,
+          };
+        });
       }
     } else {
       registrations = data.map((r: any) => ({
@@ -84,6 +88,7 @@ export default async function SheetsPage() {
         status: r.status,
         player_id: r.player_id,
         playerName: r.player?.display_name ?? "Unknown",
+        avatarUrl: r.player?.avatar_url ?? null,
       }));
     }
   }
@@ -91,7 +96,7 @@ export default async function SheetsPage() {
   // Build per-sheet data: confirmed count, waitlist count, player list
   const confirmedCountMap: Record<string, number> = {};
   const waitlistCountMap: Record<string, number> = {};
-  const playersMap: Record<string, { name: string; status: string }[]> = {};
+  const playersMap: Record<string, { name: string; status: string; avatarUrl: string | null }[]> = {};
 
   registrations.forEach((r) => {
     if (r.status === "confirmed") {
@@ -103,6 +108,7 @@ export default async function SheetsPage() {
     playersMap[r.sheet_id].push({
       name: r.playerName,
       status: r.status,
+      avatarUrl: r.avatarUrl,
     });
   });
 

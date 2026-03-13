@@ -10,6 +10,12 @@ const statusBadge: Record<string, { className: string; label: string }> = {
   cancelled: { className: "badge-red", label: "Cancelled" },
 };
 
+interface PlayerInfo {
+  name: string;
+  status: string;
+  avatarUrl: string | null;
+}
+
 interface SheetCardProps {
   sheetId: string;
   groupName: string;
@@ -19,11 +25,28 @@ interface SheetCardProps {
   playerLimit: number;
   confirmedCount: number;
   waitlistCount: number;
-  players: { name: string; status: string }[];
+  players: PlayerInfo[];
   myStatus: string | null;
   signupClosed: boolean;
   withdrawClosed: boolean;
   isFull: boolean;
+}
+
+function PlayerAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        className="h-7 w-7 rounded-full object-cover shrink-0"
+      />
+    );
+  }
+  return (
+    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-overlay text-xs font-medium text-surface-muted shrink-0">
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
 }
 
 export function SheetCard({
@@ -164,33 +187,41 @@ export function SheetCard({
         </div>
       )}
 
-      {/* Expandable player list */}
+      {/* Expandable player list — single column with avatars */}
       {expanded && (
-        <div className="mt-3 border-t border-surface-border pt-3">
+        <div className="mt-3 border-t border-surface-border pt-3 space-y-3">
           {confirmedPlayers.length > 0 && (
             <div>
-              <p className="text-xs font-medium uppercase text-surface-muted mb-1">
+              <p className="text-xs font-medium uppercase text-surface-muted mb-2">
                 Confirmed ({confirmedPlayers.length})
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-0.5">
+              <div className="space-y-1.5">
                 {confirmedPlayers.map((p, i) => (
-                  <span key={i} className="text-sm text-dark-200 truncate">
-                    {i + 1}. {p.name}
-                  </span>
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-surface-muted w-5 text-right shrink-0">
+                      {i + 1}.
+                    </span>
+                    <PlayerAvatar name={p.name} avatarUrl={p.avatarUrl} />
+                    <span className="text-sm text-dark-200 truncate">{p.name}</span>
+                  </div>
                 ))}
               </div>
             </div>
           )}
           {waitlistedPlayers.length > 0 && (
-            <div className={confirmedPlayers.length > 0 ? "mt-2" : ""}>
-              <p className="text-xs font-medium uppercase text-surface-muted mb-1">
+            <div>
+              <p className="text-xs font-medium uppercase text-surface-muted mb-2">
                 Waitlist ({waitlistedPlayers.length})
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-0.5">
+              <div className="space-y-1.5">
                 {waitlistedPlayers.map((p, i) => (
-                  <span key={i} className="text-sm text-accent-300 truncate">
-                    {i + 1}. {p.name}
-                  </span>
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs text-surface-muted w-5 text-right shrink-0">
+                      {i + 1}.
+                    </span>
+                    <PlayerAvatar name={p.name} avatarUrl={p.avatarUrl} />
+                    <span className="text-sm text-accent-300 truncate">{p.name}</span>
+                  </div>
                 ))}
               </div>
             </div>
