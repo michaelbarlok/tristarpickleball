@@ -1,7 +1,7 @@
 "use client";
 
 import { useSupabase } from "@/components/providers/supabase-provider";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 
 interface PoolPlayer {
@@ -47,7 +47,6 @@ export default function ScoreEntryPage() {
   const { id: sessionId } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const gameParam = searchParams.get("game");
-  const router = useRouter();
   const { supabase } = useSupabase();
   const [session, setSession] = useState<any>(null);
   const [players, setPlayers] = useState<PoolPlayer[]>([]);
@@ -61,7 +60,6 @@ export default function ScoreEntryPage() {
   const [scoreB, setScoreB] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [manualMode, setManualMode] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -116,17 +114,15 @@ export default function ScoreEntryPage() {
     return schedule.find((m) => m.gameNumber === parseInt(gameParam)) ?? null;
   }, [gameParam, courtPlayers]);
 
-  const isPreFilled = prefilledMatch != null && !manualMode;
-
   // Set team values when prefilled match is available
   useEffect(() => {
-    if (prefilledMatch && !manualMode) {
+    if (prefilledMatch) {
       setTeamAP1(prefilledMatch.team1[0]);
       setTeamAP2(prefilledMatch.team1[1] ?? "");
       setTeamBP1(prefilledMatch.team2[0]);
       setTeamBP2(prefilledMatch.team2[1] ?? "");
     }
-  }, [prefilledMatch, manualMode]);
+  }, [prefilledMatch]);
 
   const playerNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -149,7 +145,7 @@ export default function ScoreEntryPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        round_number: session?.current_round ?? 1,
+        round_number: session?.current_round || 1,
         pool_number: myCourt,
         team_a_p1: teamAP1,
         team_a_p2: teamAP2 || null,
@@ -165,7 +161,8 @@ export default function ScoreEntryPage() {
       setMessage(data.error ?? "Failed to submit score");
       setSubmitting(false);
     } else {
-      router.push(`/sessions/${sessionId}`);
+      // Full page navigation to guarantee fresh data fetch
+      window.location.href = `/sessions/${sessionId}`;
     }
   }
 
@@ -178,13 +175,13 @@ export default function ScoreEntryPage() {
       <div>
         <h1 className="text-2xl font-bold text-dark-100">Enter Score</h1>
         <p className="text-sm text-surface-muted">
-          {session.group?.name} — Round {session.current_round}
+          {session.group?.name} — Round {session.current_round || 1}
           {myCourt && ` — Court ${myCourt}`}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="card space-y-4">
-        {isPreFilled ? (
+        {prefilledMatch ? (
           <>
             {/* Pre-filled match display */}
             <div className="text-center space-y-1">
@@ -232,95 +229,9 @@ export default function ScoreEntryPage() {
                 />
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setManualMode(true)}
-              className="text-xs text-surface-muted hover:text-dark-200 underline"
-            >
-              Wrong matchup? Select teams manually
-            </button>
           </>
         ) : (
-          <>
-            {/* Manual team selection */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-semibold text-dark-200 mb-2">Team A</h3>
-                <select
-                  value={teamAP1}
-                  onChange={(e) => setTeamAP1(e.target.value)}
-                  className="input mb-2"
-                  required
-                >
-                  <option value="">Player 1</option>
-                  {courtPlayers.map((p) => (
-                    <option key={p.player_id} value={p.player_id}>
-                      {p.display_name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={teamAP2}
-                  onChange={(e) => setTeamAP2(e.target.value)}
-                  className="input"
-                >
-                  <option value="">Player 2 (optional)</option>
-                  {courtPlayers.map((p) => (
-                    <option key={p.player_id} value={p.player_id}>
-                      {p.display_name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min={0}
-                  value={scoreA}
-                  onChange={(e) => setScoreA(e.target.value)}
-                  className="input mt-2"
-                  placeholder="Score"
-                  required
-                />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-dark-200 mb-2">Team B</h3>
-                <select
-                  value={teamBP1}
-                  onChange={(e) => setTeamBP1(e.target.value)}
-                  className="input mb-2"
-                  required
-                >
-                  <option value="">Player 1</option>
-                  {courtPlayers.map((p) => (
-                    <option key={p.player_id} value={p.player_id}>
-                      {p.display_name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={teamBP2}
-                  onChange={(e) => setTeamBP2(e.target.value)}
-                  className="input"
-                >
-                  <option value="">Player 2 (optional)</option>
-                  {courtPlayers.map((p) => (
-                    <option key={p.player_id} value={p.player_id}>
-                      {p.display_name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min={0}
-                  value={scoreB}
-                  onChange={(e) => setScoreB(e.target.value)}
-                  className="input mt-2"
-                  placeholder="Score"
-                  required
-                />
-              </div>
-            </div>
-          </>
+          <p className="text-center text-surface-muted">Unable to determine matchup. Please go back and select a game.</p>
         )}
 
         {message && (

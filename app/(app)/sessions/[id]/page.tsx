@@ -178,48 +178,65 @@ export default function PlayerSessionPage() {
   const [myCourt, setMyCourt] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  // Refetch all data — called on mount and when returning to this page
+  async function refetchAll() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
 
-      if (profile) setMyPlayerId(profile.id);
+    if (profile) setMyPlayerId(profile.id);
 
-      const { data: sess } = await supabase
-        .from("shootout_sessions")
-        .select("*, group:shootout_groups(name), sheet:signup_sheets(event_date, location)")
-        .eq("id", sessionId)
-        .single();
-      setSession(sess as any);
+    const { data: sess } = await supabase
+      .from("shootout_sessions")
+      .select("*, group:shootout_groups(name), sheet:signup_sheets(event_date, location)")
+      .eq("id", sessionId)
+      .single();
+    setSession(sess as any);
 
-      const { data: parts } = await supabase
-        .from("session_participants")
-        .select("*, player:profiles(display_name, avatar_url)")
-        .eq("session_id", sessionId)
-        .order("court_number", { ascending: true });
+    const { data: parts } = await supabase
+      .from("session_participants")
+      .select("*, player:profiles(display_name, avatar_url)")
+      .eq("session_id", sessionId)
+      .order("court_number", { ascending: true });
 
-      if (parts) {
-        setParticipants(parts as any);
-        const me = parts.find((p: any) => p.player_id === profile?.id);
-        if (me) setMyCourt((me as any).court_number);
-      }
-
-      const { data: gameScores } = await supabase
-        .from("game_results")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("created_at");
-      setScores(gameScores ?? []);
-
-      setLoading(false);
+    if (parts) {
+      setParticipants(parts as any);
+      const me = parts.find((p: any) => p.player_id === profile?.id);
+      if (me) setMyCourt((me as any).court_number);
     }
-    fetchData();
+
+    const { data: gameScores } = await supabase
+      .from("game_results")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at");
+    setScores(gameScores ?? []);
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    refetchAll();
+  }, [sessionId, supabase]);
+
+  // Refetch when returning to this page (back navigation, tab switch)
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === "visible") {
+        refetchAll();
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", refetchAll);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", refetchAll);
+    };
   }, [sessionId, supabase]);
 
   // Realtime subscriptions
@@ -402,44 +419,40 @@ export default function PlayerSessionPage() {
           <h2 className="text-lg font-semibold text-dark-100 mb-3">Match Schedule</h2>
           <div className="space-y-2">
             {matchSchedule.map((match) => {
-              const matchContent = (
-                <>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-medium text-surface-muted w-8 shrink-0">
-                      G{match.gameNumber}
-                    </span>
-                    <span className="text-sm text-dark-100">
-                      {formatTeam(match.team1, playerNames)}
-                    </span>
-                    <span className="text-xs text-surface-muted">vs</span>
-                    <span className="text-sm text-dark-100">
-                      {formatTeam(match.team2, playerNames)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {match.bye && (
-                      <span className="text-xs text-accent-300">
-                        Bye: {playerNames.get(match.bye) ?? "?"}
-                      </span>
-                    )}
-                    {match.result ? (
-                      <span className="font-mono text-sm font-semibold text-dark-200">
-                        {match.result.scoreA} – {match.result.scoreB}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-brand-300 font-medium">Enter score &rarr;</span>
-                    )}
-                  </div>
-                </>
-              );
+              const hasResult = !!match.result;
+              const team1Won = hasResult && match.result!.scoreA > match.result!.scoreB;
+              const team2Won = hasResult && match.result!.scoreB > match.result!.scoreA;
 
-              if (match.result) {
+              if (hasResult) {
                 return (
                   <div
                     key={match.gameNumber}
-                    className="flex items-center justify-between rounded-lg px-4 py-3 bg-surface-overlay"
+                    className="rounded-lg px-4 py-3 bg-surface-overlay"
                   >
-                    {matchContent}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-surface-muted w-8 shrink-0">G{match.gameNumber}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-semibold ${team1Won ? "text-teal-300" : "text-red-400"}`}>
+                        {formatTeam(match.team1, playerNames)}
+                      </span>
+                      <span className={`font-mono text-sm font-bold ${team1Won ? "text-teal-300" : "text-red-400"}`}>
+                        {match.result!.scoreA}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-semibold ${team2Won ? "text-teal-300" : "text-red-400"}`}>
+                        {formatTeam(match.team2, playerNames)}
+                      </span>
+                      <span className={`font-mono text-sm font-bold ${team2Won ? "text-teal-300" : "text-red-400"}`}>
+                        {match.result!.scoreB}
+                      </span>
+                    </div>
+                    {match.bye && (
+                      <p className="text-[11px] text-accent-300/80 mt-1">
+                        Bye: {playerNames.get(match.bye) ?? "?"}
+                      </p>
+                    )}
                   </div>
                 );
               }
@@ -448,9 +461,28 @@ export default function PlayerSessionPage() {
                 <Link
                   key={match.gameNumber}
                   href={`/sessions/${sessionId}/score?game=${match.gameNumber}`}
-                  className="flex items-center justify-between rounded-lg px-4 py-3 bg-surface-raised border border-surface-border hover:border-brand-500/50 hover:bg-brand-900/20 transition-colors"
+                  className="block rounded-lg px-4 py-3 bg-surface-raised border border-surface-border hover:border-brand-500/50 hover:bg-brand-900/20 transition-colors"
                 >
-                  {matchContent}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-surface-muted w-8 shrink-0">
+                        G{match.gameNumber}
+                      </span>
+                      <span className="text-sm text-dark-100">
+                        {formatTeam(match.team1, playerNames)}
+                      </span>
+                      <span className="text-xs text-surface-muted">vs</span>
+                      <span className="text-sm text-dark-100">
+                        {formatTeam(match.team2, playerNames)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-brand-300 font-medium">Enter score &rarr;</span>
+                  </div>
+                  {match.bye && (
+                    <p className="text-[11px] text-accent-300/80 mt-0.5 ml-8">
+                      Bye: {playerNames.get(match.bye) ?? "?"}
+                    </p>
+                  )}
                 </Link>
               );
             })}
