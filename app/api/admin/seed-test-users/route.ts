@@ -35,6 +35,9 @@ export async function POST() {
   }
 
   // Use service client for data mutations (bypasses RLS)
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY is not configured" }, { status: 500 });
+  }
   const serviceClient = await createServiceClient();
 
   // Find the open sheet
