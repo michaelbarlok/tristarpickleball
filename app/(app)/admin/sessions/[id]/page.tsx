@@ -76,9 +76,42 @@ export default function AdminSessionDetailPage() {
       .update({ status: nextStatus })
       .eq("id", id);
 
+    // Re-fetch participants to pick up step_after changes
+    const { data: refreshed } = await supabase
+      .from("session_participants")
+      .select("*, player:profiles(id, display_name, avatar_url)")
+      .eq("session_id", id)
+      .order("court_number", { ascending: true });
+    if (refreshed) setParticipants(refreshed);
+
     setSession({ ...session, status: nextStatus });
     setUpdating(false);
   }
+
+  // Realtime: re-fetch participants when session_participants change (e.g. step updates)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-session-${id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "session_participants", filter: `session_id=eq.${id}` },
+        () => {
+          supabase
+            .from("session_participants")
+            .select("*, player:profiles(id, display_name, avatar_url)")
+            .eq("session_id", id)
+            .order("court_number", { ascending: true })
+            .then(({ data }) => {
+              if (data) setParticipants(data);
+            });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, supabase]);
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
   if (!session) return <div className="text-center py-12 text-gray-500">Session not found.</div>;

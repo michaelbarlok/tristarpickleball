@@ -79,6 +79,24 @@ export default function AdminGroupDetailPage() {
     fetchData();
   }, [fetchData]);
 
+  // Realtime: re-fetch members when group_memberships change (e.g. step updates from shootout)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`admin-group-${id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "group_memberships", filter: `group_id=eq.${id}` },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, supabase, fetchData]);
+
   // ============================================================
   // Member Actions
   // ============================================================
@@ -101,6 +119,25 @@ export default function AdminGroupDetailPage() {
       setShowAddPlayer(false);
       setSearchQuery("");
       await fetchData();
+    }
+  };
+
+  const updateStep = async (playerId: string, newStep: number) => {
+    if (newStep < 1) return;
+    const { error } = await supabase
+      .from("group_memberships")
+      .update({ current_step: newStep })
+      .eq("group_id", id)
+      .eq("player_id", playerId);
+
+    if (error) {
+      setMessage({ type: "error", text: `Failed to update step: ${error.message}` });
+    } else {
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.player_id === playerId ? { ...m, current_step: newStep } : m
+        )
+      );
     }
   };
 
@@ -365,7 +402,30 @@ export default function AdminGroupDetailPage() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">
-                      {member.current_step}
+                      <input
+                        type="number"
+                        min={1}
+                        value={member.current_step}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            setMembers((prev) =>
+                              prev.map((m) =>
+                                m.player_id === member.player_id
+                                  ? { ...m, current_step: val }
+                                  : m
+                              )
+                            );
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val >= 1) {
+                            updateStep(member.player_id, val);
+                          }
+                        }}
+                        className="w-16 rounded border border-gray-300 px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                      />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-900">
                       {member.win_pct}%
