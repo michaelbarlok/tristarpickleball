@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import type { NotificationType } from "@/types/database";
 
 interface NotifyParams {
@@ -28,7 +28,9 @@ export async function notify({
   emailTemplate,
   emailData,
 }: NotifyParams): Promise<void> {
-  const supabase = await createClient();
+  // Use service client to bypass RLS — we need to insert notifications
+  // for other users and read their profile/preferences
+  const supabase = await createServiceClient();
 
   // 1. Always write in-app notification
   await supabase.from("notifications").insert({

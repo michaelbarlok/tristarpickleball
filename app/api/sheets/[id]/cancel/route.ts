@@ -24,7 +24,7 @@ export async function POST(
     .eq("user_id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") {
+  if (!profile) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -37,6 +37,20 @@ export async function POST(
 
   if (sheetErr || !sheet) {
     return NextResponse.json({ error: "Sheet not found" }, { status: 404 });
+  }
+
+  // Allow global admins OR group admins of this sheet's group
+  if (profile.role !== "admin") {
+    const { data: membership } = await supabase
+      .from("group_memberships")
+      .select("group_role")
+      .eq("group_id", sheet.group_id)
+      .eq("player_id", profile.id)
+      .single();
+
+    if (!membership || membership.group_role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   if (sheet.status === "cancelled") {
