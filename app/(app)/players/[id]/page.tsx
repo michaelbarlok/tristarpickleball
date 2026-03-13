@@ -117,7 +117,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
               className="h-24 w-24 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-3xl font-bold">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-3xl font-bold">
               {profile.display_name?.charAt(0).toUpperCase()}
             </div>
           )}

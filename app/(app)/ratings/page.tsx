@@ -175,7 +175,7 @@ export default async function RatingsPage() {
                     {r.avatar_url ? (
                       <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-sm font-medium">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-sm font-medium">
                         {r.display_name?.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -185,7 +185,7 @@ export default async function RatingsPage() {
                   </Link>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
-                  <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-1 text-sm font-semibold text-brand-700">
+                  <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-1 text-sm font-semibold text-brand-300">
                     {r.current_step}
                   </span>
                 </td>

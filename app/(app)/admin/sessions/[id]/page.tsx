@@ -150,7 +150,7 @@ export default function AdminSessionDetailPage() {
                   idx < currentIdx
                     ? "bg-teal-900/30 text-teal-300"
                     : idx === currentIdx
-                    ? "bg-brand-900/50 text-brand-700 ring-2 ring-brand-500"
+                    ? "bg-brand-900/50 text-brand-300 ring-2 ring-brand-500"
                     : "bg-surface-overlay text-surface-muted"
                 }`}
               >

@@ -211,7 +211,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
                           className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-sm font-medium">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-sm font-medium">
                           {profile.display_name.charAt(0).toUpperCase()}
                         </div>
                       )}

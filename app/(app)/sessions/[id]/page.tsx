@@ -342,11 +342,11 @@ export default function PlayerSessionPage() {
 
       {/* My Court Assignment */}
       {myCourt != null && (
-        <div className="card bg-brand-900/40 border border-brand-200">
+        <div className="card bg-brand-900/40 border border-brand-500/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-brand-700">Your Court</p>
-              <p className="text-3xl font-bold text-brand-900">Court {myCourt}</p>
+              <p className="text-sm font-medium text-brand-300">Your Court</p>
+              <p className="text-3xl font-bold text-brand-200">Court {myCourt}</p>
             </div>
             {isActive && (
               <Link href={`/sessions/${sessionId}/score`} className="btn-primary">

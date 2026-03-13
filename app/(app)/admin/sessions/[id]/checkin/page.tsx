@@ -292,7 +292,7 @@ export default function CheckInPage() {
                     {p.avatar_url ? (
                       <img src={p.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-xs font-medium">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-xs font-medium">
                         {p.display_name.charAt(0).toUpperCase()}
                       </div>
                     )}

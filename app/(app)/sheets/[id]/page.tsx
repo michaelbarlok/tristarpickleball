@@ -5,6 +5,8 @@ import { formatDate, formatTime } from "@/lib/utils";
 import type { Registration, Profile } from "@/types/database";
 import { SheetActions } from "./sheet-actions";
 import { AdminAddMember } from "./admin-add-member";
+import { AdminDeleteSheet } from "./admin-delete-sheet";
+import { AdminRemovePlayer } from "./admin-remove-player";
 import { StartShootout } from "./start-shootout";
 
 export const dynamic = "force-dynamic";
@@ -201,7 +203,7 @@ export default async function SheetDetailPage({
         </div>
 
         {sheet.notes && (
-          <div className="mt-4 border-t pt-4">
+          <div className="mt-4 border-t border-surface-border pt-4">
             <p className="text-sm font-medium text-surface-muted">Notes</p>
             <p className="mt-1 text-dark-200">{sheet.notes}</p>
           </div>
@@ -224,13 +226,21 @@ export default async function SheetDetailPage({
         />
       )}
 
-      {/* Start Shootout — admin only */}
-      {isAdmin && !isCancelled && sheet.status === "open" && (
-        <StartShootout
-          sheetId={sheet.id}
-          groupId={sheet.group_id}
-          confirmedPlayerIds={confirmed.map((r: Registration) => r.player_id)}
-        />
+      {/* Admin actions: Start Shootout, Add Member, Cancel Event */}
+      {isAdmin && !isCancelled && (
+        <div className="card space-y-4">
+          <h3 className="text-sm font-semibold text-dark-100">Admin Actions</h3>
+          <div className="flex flex-wrap gap-3">
+            {sheet.status === "open" && (
+              <StartShootout
+                sheetId={sheet.id}
+                groupId={sheet.group_id}
+                confirmedPlayerIds={confirmed.map((r: Registration) => r.player_id)}
+              />
+            )}
+            <AdminDeleteSheet sheetId={sheet.id} />
+          </div>
+        </div>
       )}
 
       {/* Add a member (admins always, regular members when enabled) */}
@@ -266,13 +276,19 @@ export default async function SheetDetailPage({
                     {reg.player?.display_name?.charAt(0) ?? "?"}
                   </div>
                 )}
-                <span className="text-dark-100">
+                <span className="flex-1 text-dark-100">
                   {reg.player?.display_name ?? "Unknown"}
                 </span>
                 {reg.player?.skill_level && (
                   <span className="badge-blue text-xs">
                     {reg.player.skill_level}
                   </span>
+                )}
+                {isAdmin && !isCancelled && (
+                  <AdminRemovePlayer
+                    registrationId={reg.id}
+                    playerName={reg.player?.display_name ?? "this player"}
+                  />
                 )}
               </div>
             ))}
@@ -303,10 +319,16 @@ export default async function SheetDetailPage({
                           {reg.player?.display_name?.charAt(0) ?? "?"}
                         </div>
                       )}
-                      <span className="text-dark-100">
+                      <span className="flex-1 text-dark-100">
                         {reg.player?.display_name ?? "Unknown"}
                       </span>
                       <span className="badge-yellow text-xs">Waitlisted</span>
+                      {isAdmin && !isCancelled && (
+                        <AdminRemovePlayer
+                          registrationId={reg.id}
+                          playerName={reg.player?.display_name ?? "this player"}
+                        />
+                      )}
                     </div>
                   )
                 )}

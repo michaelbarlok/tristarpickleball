@@ -104,7 +104,7 @@ export default function ThreadPage() {
           {thread.author?.avatar_url ? (
             <img src={thread.author.avatar_url} alt="" className="h-6 w-6 rounded-full" />
           ) : (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-900/50 text-brand-700 text-xs">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-xs">
               {thread.author?.display_name?.charAt(0).toUpperCase()}
             </div>
           )}
