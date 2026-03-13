@@ -11,11 +11,19 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const hasMinLength = password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const passwordValid = hasMinLength && hasLetter && hasNumber && passwordsMatch;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!passwordValid) return;
     setError("");
     setLoading(true);
 
@@ -98,16 +106,47 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input"
-            minLength={6}
             required
           />
+          {password.length > 0 && (
+            <ul className="mt-2 space-y-1 text-sm">
+              <li className={hasMinLength ? "text-green-400" : "text-red-400"}>
+                {hasMinLength ? "\u2713" : "\u2717"} At least 8 characters
+              </li>
+              <li className={hasLetter ? "text-green-400" : "text-red-400"}>
+                {hasLetter ? "\u2713" : "\u2717"} Contains a letter
+              </li>
+              <li className={hasNumber ? "text-green-400" : "text-red-400"}>
+                {hasNumber ? "\u2713" : "\u2717"} Contains a number
+              </li>
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-dark-200 mb-1">
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="input"
+            required
+          />
+          {confirmPassword.length > 0 && (
+            <p className={`mt-2 text-sm ${passwordsMatch ? "text-green-400" : "text-red-400"}`}>
+              {passwordsMatch ? "\u2713 Passwords match" : "\u2717 Passwords do not match"}
+            </p>
+          )}
         </div>
 
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         )}
 
-        <button type="submit" className="btn-primary w-full" disabled={loading}>
+        <button type="submit" className="btn-primary w-full" disabled={loading || !passwordValid}>
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
