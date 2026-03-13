@@ -173,6 +173,15 @@ export default function NewSheetPage() {
         return;
       }
 
+      // Send notifications to group members if enabled
+      if (notifyOnCreate) {
+        await fetch("/api/sheets/notify-create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sheetId: sheet.id }),
+        });
+      }
+
       router.push(`/admin/sheets/${sheet.id}`);
       router.refresh();
     } catch (err) {
