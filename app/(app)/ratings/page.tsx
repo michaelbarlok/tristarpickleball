@@ -157,25 +157,25 @@ export default async function RatingsPage() {
         <table className="min-w-full divide-y divide-surface-border">
           <thead className="bg-surface-overlay">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted w-16">Rank</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Step</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Percentage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-surface-muted">Last Active</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted w-10 sm:w-16">Rank</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Step</th>
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Pct</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Last Active</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-border bg-surface-raised">
             {ranked.map((r, i) => (
               <tr key={r.player_id}>
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-surface-muted">
+                <td className="whitespace-nowrap px-2 sm:px-4 py-3 sm:py-4 text-sm font-medium text-surface-muted">
                   {i + 1}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <Link href={`/players/${r.player_id}`} className="flex items-center gap-3 hover:text-brand-600">
+                <td className="whitespace-nowrap px-2 sm:px-4 py-3 sm:py-4">
+                  <Link href={`/players/${r.player_id}`} className="flex items-center gap-2 sm:gap-3 hover:text-brand-600">
                     {r.avatar_url ? (
-                      <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      <img src={r.avatar_url} alt="" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-sm font-medium">
+                      <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 text-xs sm:text-sm font-medium">
                         {r.display_name?.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -184,15 +184,15 @@ export default async function RatingsPage() {
                     </span>
                   </Link>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">
+                <td className="whitespace-nowrap px-2 sm:px-4 py-3 sm:py-4">
                   <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-1 text-sm font-semibold text-brand-300">
                     {r.current_step}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-dark-200">
+                <td className="whitespace-nowrap px-2 sm:px-4 py-3 sm:py-4 text-sm text-dark-200">
                   {r.percentage > 0 ? `${r.percentage.toFixed(1)}%` : "—"}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-surface-muted">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 sm:py-4 text-sm text-surface-muted">
                   {r.last_played_at
                     ? new Date(r.last_played_at).toLocaleDateString("en-US", {
                         month: "short",
@@ -204,7 +204,7 @@ export default async function RatingsPage() {
             ))}
             {ranked.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-surface-muted">
+                <td colSpan={5} className="px-2 sm:px-4 py-8 text-center text-surface-muted">
                   No ranked players yet.
                 </td>
               </tr>

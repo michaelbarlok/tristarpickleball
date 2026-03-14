@@ -185,25 +185,25 @@ export default async function AdminGroupsPage() {
           <table className="min-w-full divide-y divide-surface-border">
             <thead className="bg-surface-overlay">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Slug
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Members
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Last Session
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="px-2 sm:px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Active
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Actions
                 </th>
               </tr>
@@ -220,21 +220,21 @@ export default async function AdminGroupsPage() {
 
                 return (
                   <tr key={group.id}>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-dark-100">
+                    <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm font-medium text-dark-100">
                       {group.name}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm">
                       <span className={group.group_type === "free_play" ? "badge-yellow" : "badge-blue"}>
                         {group.group_type === "free_play" ? "Free Play" : "Ladder"}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-surface-muted">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-surface-muted">
                       {group.slug}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                    <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-dark-100">
                       {memberCount}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-surface-muted">
+                    <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-surface-muted">
                       {lastSession
                         ? new Date(lastSession).toLocaleDateString("en-US", {
                             month: "short",
@@ -242,15 +242,15 @@ export default async function AdminGroupsPage() {
                           })
                         : "None"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                    <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-center text-sm">
                       {group.is_active ? (
                         <span className="badge-green">Active</span>
                       ) : (
                         <span className="badge-gray">Inactive</span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-2 sm:px-4 py-3 text-right text-sm">
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
                         <Link
                           href={`/admin/groups/${group.id}`}
                           className="text-brand-600 hover:text-brand-500"

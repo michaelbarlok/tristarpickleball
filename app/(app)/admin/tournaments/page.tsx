@@ -34,8 +34,8 @@ export default async function AdminTournamentsPage() {
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Title</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Date</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Status</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Registered</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Creator</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Registered</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Creator</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Actions</th>
             </tr>
           </thead>
@@ -58,11 +58,11 @@ export default async function AdminTournamentsPage() {
                     {t.status.replace(/_/g, " ")}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {t.registrations?.[0]?.count ?? 0}
                   {t.player_cap ? `/${t.player_cap}` : ""}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {t.creator?.display_name ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm">

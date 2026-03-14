@@ -80,12 +80,12 @@ export default async function AdminSheetsPage() {
                 <table className="min-w-full text-left">
                   <thead>
                     <tr className="bg-surface-overlay text-xs font-medium uppercase text-surface-muted">
-                      <th className="py-3 pl-4 pr-2">Date</th>
+                      <th className="py-3 pl-2 sm:pl-4 pr-2">Date</th>
                       <th className="py-3 px-2">Status</th>
-                      <th className="py-3 px-2">Group</th>
-                      <th className="py-3 px-2">Registered/Limit</th>
-                      <th className="py-3 px-2">Waitlisted</th>
-                      <th className="py-3 pl-2 pr-4 text-right">Actions</th>
+                      <th className="hidden sm:table-cell py-3 px-2">Group</th>
+                      <th className="py-3 px-2">Reg/Limit</th>
+                      <th className="hidden sm:table-cell py-3 px-2">Waitlisted</th>
+                      <th className="py-3 pl-2 pr-2 sm:pr-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -104,23 +104,23 @@ export default async function AdminSheetsPage() {
                             sheet.status === "cancelled" ? "bg-red-900/30" : ""
                           }`}
                         >
-                          <td className="py-3 pl-4 pr-2 text-sm font-medium text-dark-100">
+                          <td className="py-3 pl-2 sm:pl-4 pr-2 text-sm font-medium text-dark-100">
                             {formatShortDate(sheet.event_date)}
                           </td>
                           <td className="py-3 px-2">
                             <span className={badge.className}>{badge.label}</span>
                           </td>
-                          <td className="py-3 px-2 text-sm text-dark-200">
+                          <td className="hidden sm:table-cell py-3 px-2 text-sm text-dark-200">
                             {sheet.group?.name ?? "---"}
                           </td>
                           <td className="py-3 px-2 text-sm text-dark-200">
                             {counts.confirmed}/{sheet.player_limit}
                           </td>
-                          <td className="py-3 px-2 text-sm text-dark-200">
+                          <td className="hidden sm:table-cell py-3 px-2 text-sm text-dark-200">
                             {counts.waitlisted}
                           </td>
-                          <td className="py-3 pl-2 pr-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="py-3 pl-2 pr-2 sm:pr-4 text-right">
+                            <div className="flex items-center justify-end gap-2 flex-wrap">
                               <Link
                                 href={`/sheets/${sheet.id}`}
                                 className="text-sm text-brand-600 hover:text-brand-500"
