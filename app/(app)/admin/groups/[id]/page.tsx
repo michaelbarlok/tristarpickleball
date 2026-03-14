@@ -278,6 +278,15 @@ export default function AdminGroupDetailPage() {
         </div>
       )}
 
+      {/* Group Type Badge */}
+      {group && (
+        <div className="flex items-center gap-2">
+          <span className={group.group_type === "free_play" ? "badge-yellow" : "badge-blue"}>
+            {group.group_type === "free_play" ? "Free Play" : "Ladder League"}
+          </span>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 border-b border-surface-border">
         <button
@@ -291,17 +300,19 @@ export default function AdminGroupDetailPage() {
         >
           Members ({members.length})
         </button>
-        <button
-          onClick={() => setActiveTab("preferences")}
-          className={cn(
-            "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
-            activeTab === "preferences"
-              ? "border-brand-600 text-brand-600"
-              : "border-transparent text-surface-muted hover:text-dark-200"
-          )}
-        >
-          Preferences
-        </button>
+        {group?.group_type !== "free_play" && (
+          <button
+            onClick={() => setActiveTab("preferences")}
+            className={cn(
+              "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+              activeTab === "preferences"
+                ? "border-brand-600 text-brand-600"
+                : "border-transparent text-surface-muted hover:text-dark-200"
+            )}
+          >
+            Preferences
+          </button>
+        )}
       </div>
 
       {/* Members Tab */}
@@ -381,12 +392,16 @@ export default function AdminGroupDetailPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Player
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                    Step
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                    Win %
-                  </th>
+                  {group?.group_type !== "free_play" && (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                        Step
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                        Win %
+                      </th>
+                    </>
+                  )}
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Joined
                   </th>
@@ -426,35 +441,39 @@ export default function AdminGroupDetailPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
-                      <input
-                        type="number"
-                        min={1}
-                        value={member.current_step}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            setMembers((prev) =>
-                              prev.map((m) =>
-                                m.player_id === member.player_id
-                                  ? { ...m, current_step: val }
-                                  : m
-                              )
-                            );
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val) && val >= 1) {
-                            updateStep(member.player_id, val);
-                          }
-                        }}
-                        className="w-16 rounded border border-surface-border bg-surface-raised text-dark-100 px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-                      />
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
-                      {member.win_pct}%
-                    </td>
+                    {group?.group_type !== "free_play" && (
+                      <>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                          <input
+                            type="number"
+                            min={1}
+                            value={member.current_step}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val)) {
+                                setMembers((prev) =>
+                                  prev.map((m) =>
+                                    m.player_id === member.player_id
+                                      ? { ...m, current_step: val }
+                                      : m
+                                  )
+                                );
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 1) {
+                                updateStep(member.player_id, val);
+                              }
+                            }}
+                            className="w-16 rounded border border-surface-border bg-surface-raised text-dark-100 px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                          />
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                          {member.win_pct}%
+                        </td>
+                      </>
+                    )}
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-surface-muted">
                       {new Date(member.joined_at).toLocaleDateString("en-US", {
                         month: "short",

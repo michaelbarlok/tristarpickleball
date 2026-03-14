@@ -193,6 +193,67 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
         </div>
       </div>
 
+      {/* DUPR & USA Pickleball */}
+      {(profile.dupr_id || profile.dupr_singles_rating || profile.dupr_doubles_rating || profile.usap_member_id) && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {(profile.dupr_id || profile.dupr_singles_rating || profile.dupr_doubles_rating) && (
+            <div className="card">
+              <h3 className="text-sm font-semibold text-dark-100 mb-3">DUPR</h3>
+              <div className="space-y-2 text-sm">
+                {profile.dupr_id && (
+                  <div className="flex justify-between">
+                    <span className="text-surface-muted">ID</span>
+                    <span className="font-medium text-dark-100">{profile.dupr_id}</span>
+                  </div>
+                )}
+                {profile.dupr_singles_rating && (
+                  <div className="flex justify-between">
+                    <span className="text-surface-muted">Singles</span>
+                    <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-0.5 text-xs font-semibold text-brand-300">
+                      {profile.dupr_singles_rating}
+                    </span>
+                  </div>
+                )}
+                {profile.dupr_doubles_rating && (
+                  <div className="flex justify-between">
+                    <span className="text-surface-muted">Doubles</span>
+                    <span className="inline-flex items-center rounded-md bg-brand-900/40 px-2 py-0.5 text-xs font-semibold text-brand-300">
+                      {profile.dupr_doubles_rating}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {profile.usap_member_id && (
+            <div className="card">
+              <h3 className="text-sm font-semibold text-dark-100 mb-3">USA Pickleball</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-surface-muted">Member ID</span>
+                  <span className="font-medium text-dark-100">{profile.usap_member_id}</span>
+                </div>
+                {profile.usap_tier && (
+                  <div className="flex justify-between">
+                    <span className="text-surface-muted">Tier</span>
+                    <span className="font-medium text-dark-100">{profile.usap_tier}</span>
+                  </div>
+                )}
+                {profile.usap_expiration && (
+                  <div className="flex justify-between">
+                    <span className="text-surface-muted">Expires</span>
+                    <span className={`font-medium ${new Date(profile.usap_expiration) >= new Date() ? "text-teal-300" : "text-red-400"}`}>
+                      {new Date(profile.usap_expiration).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {new Date(profile.usap_expiration) < new Date() && " (Expired)"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Group Memberships */}
       <section>
         <h2 className="mb-4 text-lg font-semibold text-dark-100">
@@ -206,22 +267,31 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
                 href={`/groups/${m.group.slug}`}
                 className="card hover:ring-brand-500/30 transition-shadow"
               >
-                <h3 className="font-semibold text-dark-100">
-                  {m.group.name}
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-dark-100">
+                    {m.group.name}
+                  </h3>
+                  <span className={m.group.group_type === "free_play" ? "badge-yellow" : "badge-blue"}>
+                    {m.group.group_type === "free_play" ? "Free Play" : "Ladder"}
+                  </span>
+                </div>
                 <div className="mt-2 space-y-1 text-sm text-surface-muted">
-                  <div className="flex justify-between">
-                    <span>Step</span>
-                    <span className="font-medium text-dark-100">
-                      {m.current_step}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Win %</span>
-                    <span className="font-medium text-dark-100">
-                      {m.win_pct}%
-                    </span>
-                  </div>
+                  {m.group.group_type !== "free_play" && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Step</span>
+                        <span className="font-medium text-dark-100">
+                          {m.current_step}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Win %</span>
+                        <span className="font-medium text-dark-100">
+                          {m.win_pct}%
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between">
                     <span>Sessions</span>
                     <span className="font-medium text-dark-100">

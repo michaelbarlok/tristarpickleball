@@ -311,12 +311,13 @@ function resolveOverflow(
  * 1st place: court - 1 (move up)
  * Middle finishers: stay
  * Last place: court + 1 (move down)
+ * Result is clamped to [1, numCourts].
  */
 export function computeTargetCourt(
   courtNumber: number,
   poolFinish: number,
   poolSize: number,
-  _numCourts?: number
+  numCourts: number
 ): number {
   let target = courtNumber;
 
@@ -327,7 +328,7 @@ export function computeTargetCourt(
   }
   // Middle finishers stay
 
-  return Math.max(1, target); // Floor at court 1, no ceiling cap
+  return Math.min(numCourts, Math.max(1, target));
 }
 
 /**
