@@ -292,6 +292,19 @@ export default function AdminSheetDetailPage() {
       return;
 
     try {
+      // Block if there's already an active (non-complete) session
+      const { data: activeSessions } = await supabase
+        .from("shootout_sessions")
+        .select("id, status")
+        .eq("sheet_id", sheetId)
+        .neq("status", "session_complete")
+        .limit(1);
+
+      if (activeSessions && activeSessions.length > 0) {
+        setError("There is already an active session for this sheet. Complete it before starting a new one.");
+        return;
+      }
+
       const { data: session, error: sessionErr } = await supabase
         .from("shootout_sessions")
         .insert({
