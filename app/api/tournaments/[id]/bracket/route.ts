@@ -298,7 +298,9 @@ export async function PUT(
     }
   }
 
-  // Check if tournament is complete (all matches in final round completed)
+  // Check if tournament is complete
+  // For round robin: all divisions must have playoff matches AND all matches must be completed
+  // For other formats: all matches must be completed
   const { data: pendingMatches } = await supabase
     .from("tournament_matches")
     .select("id")
@@ -307,10 +309,40 @@ export async function PUT(
     .limit(1);
 
   if (!pendingMatches || pendingMatches.length === 0) {
-    await supabase
-      .from("tournaments")
-      .update({ status: "completed" })
-      .eq("id", tournamentId);
+    // For round robin, also check that all divisions have entered playoffs
+    let canComplete = true;
+    if (tournament.format === "round_robin") {
+      const { data: tournamentData } = await supabase
+        .from("tournaments")
+        .select("divisions")
+        .eq("id", tournamentId)
+        .single();
+
+      if (tournamentData?.divisions) {
+        const divisions = tournamentData.divisions as string[];
+        for (const div of divisions) {
+          const { data: playoffCheck } = await supabase
+            .from("tournament_matches")
+            .select("id")
+            .eq("tournament_id", tournamentId)
+            .eq("division", div)
+            .eq("bracket", "playoff")
+            .limit(1);
+
+          if (!playoffCheck || playoffCheck.length === 0) {
+            canComplete = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if (canComplete) {
+      await supabase
+        .from("tournaments")
+        .update({ status: "completed" })
+        .eq("id", tournamentId);
+    }
   }
 
   return NextResponse.json(match);

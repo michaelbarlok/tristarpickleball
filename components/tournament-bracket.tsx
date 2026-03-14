@@ -149,6 +149,8 @@ function RoundRobinView({
   const router = useRouter();
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState("");
+  const [showReview, setShowReview] = useState(false);
+  const [editableSeeds, setEditableSeeds] = useState<{ id: string; name: string; wins: number; losses: number; pointDiff: number }[]>([]);
 
   // Separate pool play from playoff matches
   const poolMatches = matches.filter((m) => m.bracket === "winners" || m.bracket === "losers");
@@ -166,16 +168,53 @@ function RoundRobinView({
 
   const hasPlayoffs = playoffMatches.length > 0;
 
-  async function handleAdvanceToPlayoffs() {
+  // Determine division results from completed playoff matches
+  const divisionResults = getDivisionResults(playoffMatches);
+
+  function handleReviewAdvancement() {
+    // Compute the proposed seeding from pool standings
+    let proposed: { id: string; name: string; wins: number; losses: number; pointDiff: number }[];
+
+    if (hasTwoPools) {
+      const poolAStandings = computeStandings(poolAMatches);
+      const poolBStandings = computeStandings(poolBMatches);
+      const poolATop3 = poolAStandings.slice(0, 3);
+      const poolBTop3 = poolBStandings.slice(0, 3);
+      proposed = [...poolATop3, ...poolBTop3].sort(
+        (a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff
+      );
+    } else {
+      const standings = computeStandings(poolAMatches);
+      proposed = standings.slice(0, 4);
+    }
+
+    setEditableSeeds(proposed);
+    setShowReview(true);
+  }
+
+  function moveSeed(index: number, direction: -1 | 1) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= editableSeeds.length) return;
+    const updated = [...editableSeeds];
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    setEditableSeeds(updated);
+  }
+
+  async function handleConfirmAdvancement() {
     if (!division) return;
     setAdvancing(true);
     setAdvanceError("");
     const res = await fetch(`/api/tournaments/${tournamentId}/divisions`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "advance_to_playoffs", division }),
+      body: JSON.stringify({
+        action: "advance_to_playoffs",
+        division,
+        seeded_players: editableSeeds.map((s) => s.id),
+      }),
     });
     if (res.ok) {
+      setShowReview(false);
       router.refresh();
     } else {
       const data = await res.json().catch(() => null);
@@ -186,6 +225,33 @@ function RoundRobinView({
 
   return (
     <div className="space-y-6">
+      {/* Division Results (visible to everyone when playoffs complete) */}
+      {divisionResults && (
+        <div className="card border border-brand-300/30 bg-surface-raised">
+          <h3 className="text-sm font-semibold text-dark-100 mb-3 uppercase tracking-wider">Results</h3>
+          <div className="space-y-2">
+            {divisionResults.first && (
+              <div className="flex items-center gap-3">
+                <span className="text-lg">&#x1F947;</span>
+                <span className="text-sm font-semibold text-dark-100">{divisionResults.first}</span>
+              </div>
+            )}
+            {divisionResults.second && (
+              <div className="flex items-center gap-3">
+                <span className="text-lg">&#x1F948;</span>
+                <span className="text-sm font-medium text-dark-200">{divisionResults.second}</span>
+              </div>
+            )}
+            {divisionResults.third && (
+              <div className="flex items-center gap-3">
+                <span className="text-lg">&#x1F949;</span>
+                <span className="text-sm font-medium text-dark-200">{divisionResults.third}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Pool Standings + Matches */}
       {hasTwoPools ? (
         <>
@@ -211,23 +277,74 @@ function RoundRobinView({
         />
       )}
 
-      {/* Advance to Playoffs button */}
-      {canManage && poolComplete && !hasPlayoffs && division && (
+      {/* Advance to Playoffs — Review Step */}
+      {canManage && poolComplete && !hasPlayoffs && division && !showReview && (
         <div className="card">
           <h3 className="text-sm font-semibold text-dark-200 mb-2">Pool Play Complete</h3>
           <p className="text-xs text-surface-muted mb-3">
-            All pool matches are finished. Advance to the playoff bracket to determine the winner.
+            All pool matches are finished.
             {hasTwoPools
-              ? " Top 3 from each pool will be seeded into a 6-team playoff."
-              : " Top 4 teams will be seeded into a 4-team playoff."}
+              ? " Review the top 3 from each pool before advancing to a 6-team playoff."
+              : " Review the top 4 teams before advancing to the playoff bracket."}
           </p>
           <button
-            onClick={handleAdvanceToPlayoffs}
-            disabled={advancing}
-            className="btn-primary disabled:opacity-50"
+            onClick={handleReviewAdvancement}
+            className="btn-primary"
           >
-            {advancing ? "Generating..." : "Advance to Playoffs"}
+            Review Advancement
           </button>
+        </div>
+      )}
+
+      {/* Seed Review / Confirmation Panel */}
+      {showReview && (
+        <div className="card border border-brand-300/40">
+          <h3 className="text-sm font-semibold text-dark-200 mb-1">Confirm Playoff Seeding</h3>
+          <p className="text-xs text-surface-muted mb-3">
+            Review and adjust the seeding order. Use the arrows to move teams up or down. Once confirmed, the playoff bracket will be generated.
+          </p>
+          <div className="space-y-1 mb-4">
+            {editableSeeds.map((team, i) => (
+              <div key={team.id} className="flex items-center gap-2 rounded-lg bg-surface-overlay px-3 py-2">
+                <span className="text-xs font-bold text-brand-300 w-5">#{i + 1}</span>
+                <span className="text-sm font-medium text-dark-100 flex-1">{team.name}</span>
+                <span className="text-xs text-surface-muted">
+                  {team.wins}W-{team.losses}L ({team.pointDiff > 0 ? "+" : ""}{team.pointDiff})
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => moveSeed(i, -1)}
+                    disabled={i === 0}
+                    className="text-xs px-1.5 py-0.5 rounded bg-surface-raised text-surface-muted hover:text-dark-200 disabled:opacity-30"
+                  >
+                    &uarr;
+                  </button>
+                  <button
+                    onClick={() => moveSeed(i, 1)}
+                    disabled={i === editableSeeds.length - 1}
+                    className="text-xs px-1.5 py-0.5 rounded bg-surface-raised text-surface-muted hover:text-dark-200 disabled:opacity-30"
+                  >
+                    &darr;
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleConfirmAdvancement}
+              disabled={advancing}
+              className="btn-primary disabled:opacity-50"
+            >
+              {advancing ? "Generating..." : "Confirm & Generate Playoffs"}
+            </button>
+            <button
+              onClick={() => setShowReview(false)}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
+          </div>
           {advanceError && <p className="text-xs text-red-400 mt-2">{advanceError}</p>}
         </div>
       )}
@@ -387,6 +504,48 @@ function PlayoffBracketView({
       </div>
     </div>
   );
+}
+
+/**
+ * Determine 1st, 2nd, and 3rd place from completed playoff matches.
+ * Returns null if playoffs aren't finished yet.
+ */
+function getDivisionResults(playoffMatches: TournamentMatch[]): { first: string; second: string; third: string | null } | null {
+  if (playoffMatches.length === 0) return null;
+
+  const maxRound = Math.max(...playoffMatches.map((m) => m.round));
+  const finalRoundMatches = playoffMatches.filter((m) => m.round === maxRound);
+
+  // Championship is match 1 in final round, 3rd place is match 2
+  const championship = finalRoundMatches.find((m) => m.match_number === 1);
+  const thirdPlace = finalRoundMatches.find((m) => m.match_number === 2);
+
+  if (!championship || championship.status !== "completed" || !championship.winner_id) return null;
+
+  const firstId = championship.winner_id;
+  const secondId = championship.player1_id === firstId ? championship.player2_id : championship.player1_id;
+
+  const getName = (id: string | null | undefined, match: TournamentMatch): string => {
+    if (!id) return "Unknown";
+    if (id === match.player1_id) return (match as any).player1?.display_name ?? id.slice(0, 8);
+    if (id === match.player2_id) return (match as any).player2?.display_name ?? id.slice(0, 8);
+    // Search other matches for this player's name
+    for (const m of playoffMatches) {
+      if (m.player1_id === id) return (m as any).player1?.display_name ?? id.slice(0, 8);
+      if (m.player2_id === id) return (m as any).player2?.display_name ?? id.slice(0, 8);
+    }
+    return id.slice(0, 8);
+  };
+
+  const first = getName(firstId, championship);
+  const second = getName(secondId, championship);
+
+  let third: string | null = null;
+  if (thirdPlace && thirdPlace.status === "completed" && thirdPlace.winner_id) {
+    third = getName(thirdPlace.winner_id, thirdPlace);
+  }
+
+  return { first, second, third };
 }
 
 /**

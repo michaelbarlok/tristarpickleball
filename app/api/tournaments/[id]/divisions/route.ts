@@ -121,7 +121,7 @@ export async function PUT(
   }
 
   if (body.action === "advance_to_playoffs") {
-    const { division } = body as { division: string };
+    const { division, seeded_players } = body as { division: string; seeded_players?: string[] };
     if (!division) {
       return NextResponse.json({ error: "division required" }, { status: 400 });
     }
@@ -149,33 +149,33 @@ export async function PUT(
       );
     }
 
-    // Determine if this is a single-pool or two-pool setup
-    const hasTwoPools = poolMatches.some((m) => m.bracket === "losers");
-
+    // Use organizer-provided seeding if given, otherwise compute from standings
     let seededPlayerIds: string[];
 
-    if (hasTwoPools) {
-      // Two pools: top 3 from each pool → 6-team playoff
-      const poolAMatches = poolMatches.filter((m) => m.bracket === "winners");
-      const poolBMatches = poolMatches.filter((m) => m.bracket === "losers");
-
-      const poolAStandings = computePoolStandings(poolAMatches);
-      const poolBStandings = computePoolStandings(poolBMatches);
-
-      const poolATop3 = poolAStandings.slice(0, 3);
-      const poolBTop3 = poolBStandings.slice(0, 3);
-
-      // Interleave seeding: best from A is #1, best from B is #2, etc.
-      // Then sort all 6 by W-L record and point diff for true seeding
-      const allQualifiers = [...poolATop3, ...poolBTop3].sort(
-        (a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff
-      );
-
-      seededPlayerIds = allQualifiers.map((s) => s.id);
+    if (seeded_players && seeded_players.length >= 4) {
+      seededPlayerIds = seeded_players;
     } else {
-      // Single pool: top 4 → 4-team playoff
-      const standings = computePoolStandings(poolMatches);
-      seededPlayerIds = standings.slice(0, 4).map((s) => s.id);
+      const hasTwoPools = poolMatches.some((m) => m.bracket === "losers");
+
+      if (hasTwoPools) {
+        const poolAMatches = poolMatches.filter((m) => m.bracket === "winners");
+        const poolBMatches = poolMatches.filter((m) => m.bracket === "losers");
+
+        const poolAStandings = computePoolStandings(poolAMatches);
+        const poolBStandings = computePoolStandings(poolBMatches);
+
+        const poolATop3 = poolAStandings.slice(0, 3);
+        const poolBTop3 = poolBStandings.slice(0, 3);
+
+        const allQualifiers = [...poolATop3, ...poolBTop3].sort(
+          (a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff
+        );
+
+        seededPlayerIds = allQualifiers.map((s) => s.id);
+      } else {
+        const standings = computePoolStandings(poolMatches);
+        seededPlayerIds = standings.slice(0, 4).map((s) => s.id);
+      }
     }
 
     if (seededPlayerIds.length < 4) {
