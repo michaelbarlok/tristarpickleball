@@ -4,6 +4,8 @@ import {
   generateSingleElimination,
   generateDoubleElimination,
   generateRoundRobin,
+  generatePlayoffBracket,
+  computePoolStandings,
 } from "@/lib/tournament-bracket";
 
 async function getAuthorizedProfile(tournamentId: string) {
@@ -116,6 +118,99 @@ export async function PUT(
     }
 
     return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === "advance_to_playoffs") {
+    const { division } = body as { division: string };
+    if (!division) {
+      return NextResponse.json({ error: "division required" }, { status: 400 });
+    }
+
+    // Fetch all pool play matches for this division (winners + losers brackets = pools)
+    const { data: poolMatches } = await supabase
+      .from("tournament_matches")
+      .select("player1_id, player2_id, winner_id, score1, score2, status, bracket")
+      .eq("tournament_id", tournamentId)
+      .eq("division", division)
+      .in("bracket", ["winners", "losers"]);
+
+    if (!poolMatches) {
+      return NextResponse.json({ error: "No pool matches found" }, { status: 400 });
+    }
+
+    // Check all non-bye pool matches are completed
+    const incomplete = poolMatches.filter(
+      (m) => m.status !== "completed" && m.status !== "bye"
+    );
+    if (incomplete.length > 0) {
+      return NextResponse.json(
+        { error: `${incomplete.length} pool match(es) still pending` },
+        { status: 400 }
+      );
+    }
+
+    // Determine if this is a single-pool or two-pool setup
+    const hasTwoPools = poolMatches.some((m) => m.bracket === "losers");
+
+    let seededPlayerIds: string[];
+
+    if (hasTwoPools) {
+      // Two pools: top 3 from each pool → 6-team playoff
+      const poolAMatches = poolMatches.filter((m) => m.bracket === "winners");
+      const poolBMatches = poolMatches.filter((m) => m.bracket === "losers");
+
+      const poolAStandings = computePoolStandings(poolAMatches);
+      const poolBStandings = computePoolStandings(poolBMatches);
+
+      const poolATop3 = poolAStandings.slice(0, 3);
+      const poolBTop3 = poolBStandings.slice(0, 3);
+
+      // Interleave seeding: best from A is #1, best from B is #2, etc.
+      // Then sort all 6 by W-L record and point diff for true seeding
+      const allQualifiers = [...poolATop3, ...poolBTop3].sort(
+        (a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff
+      );
+
+      seededPlayerIds = allQualifiers.map((s) => s.id);
+    } else {
+      // Single pool: top 4 → 4-team playoff
+      const standings = computePoolStandings(poolMatches);
+      seededPlayerIds = standings.slice(0, 4).map((s) => s.id);
+    }
+
+    if (seededPlayerIds.length < 4) {
+      return NextResponse.json(
+        { error: "Not enough teams to form playoff bracket" },
+        { status: 400 }
+      );
+    }
+
+    // Generate playoff bracket
+    const playoffMatches = generatePlayoffBracket(seededPlayerIds);
+
+    // Insert playoff matches
+    const matchInserts = playoffMatches.map((m) => ({
+      tournament_id: tournamentId,
+      division,
+      round: m.round,
+      match_number: m.match_number,
+      bracket: m.bracket,
+      player1_id: m.player1_id,
+      player2_id: m.player2_id,
+      status: m.status,
+      score1: [] as number[],
+      score2: [] as number[],
+    }));
+
+    const { error: insertError } = await supabase
+      .from("tournament_matches")
+      .insert(matchInserts);
+
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, playoff_teams: seededPlayerIds.length });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

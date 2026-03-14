@@ -248,6 +248,7 @@ export default async function TournamentDetailPage({
                 format={tournament.format}
                 canManage={canManage}
                 tournamentId={id}
+                division={div === "__none__" ? undefined : div}
               />
             </div>
           ))}

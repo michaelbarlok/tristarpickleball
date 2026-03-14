@@ -230,6 +230,74 @@ export async function PUT(
     }
   }
 
+  // Playoff bracket advancement (winner → next round, SF losers → 3rd place)
+  if (match.bracket === "playoff") {
+    // Get all playoff matches for this division to determine max round
+    let playoffQuery = supabase
+      .from("tournament_matches")
+      .select("round, match_number, id")
+      .eq("tournament_id", tournamentId)
+      .eq("bracket", "playoff");
+
+    if (match.division) {
+      playoffQuery = playoffQuery.eq("division", match.division);
+    }
+
+    const { data: allPlayoff } = await playoffQuery;
+
+    if (allPlayoff && allPlayoff.length > 0) {
+      const maxRound = Math.max(...allPlayoff.map((m: any) => m.round));
+      const isSemifinalRound = match.round === maxRound - 1;
+      const isFinalRound = match.round >= maxRound;
+
+      // Determine loser
+      const loserId = match.player1_id === winner_id ? match.player2_id : match.player1_id;
+
+      if (!isFinalRound) {
+        // Winner advancement
+        if (isSemifinalRound) {
+          // SF winners → final (match 1 in max round)
+          const winnerSlot = match.match_number % 2 === 1 ? "player1_id" : "player2_id";
+          const finalMatch = allPlayoff.find(
+            (m: any) => m.round === maxRound && m.match_number === 1
+          );
+          if (finalMatch) {
+            await supabase
+              .from("tournament_matches")
+              .update({ [winnerSlot]: winner_id })
+              .eq("id", finalMatch.id);
+          }
+
+          // SF losers → 3rd place game (match 2 in max round)
+          if (loserId) {
+            const loserSlot = match.match_number % 2 === 1 ? "player1_id" : "player2_id";
+            const thirdPlaceMatch = allPlayoff.find(
+              (m: any) => m.round === maxRound && m.match_number === 2
+            );
+            if (thirdPlaceMatch) {
+              await supabase
+                .from("tournament_matches")
+                .update({ [loserSlot]: loserId })
+                .eq("id", thirdPlaceMatch.id);
+            }
+          }
+        } else {
+          // QF winners → SF (for 6-team bracket)
+          // R1M1 winner → R2M1 player2, R1M2 winner → R2M2 player2
+          const sfMatch = allPlayoff.find(
+            (m: any) => m.round === match.round + 1 && m.match_number === match.match_number
+          );
+          if (sfMatch) {
+            await supabase
+              .from("tournament_matches")
+              .update({ player2_id: winner_id })
+              .eq("id", sfMatch.id);
+          }
+        }
+      }
+    }
+  }
+
   // Check if tournament is complete (all matches in final round completed)
   const { data: pendingMatches } = await supabase
     .from("tournament_matches")

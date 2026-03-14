@@ -49,7 +49,7 @@ export type TournamentSkill = "3.0" | "3.5" | "4.0" | "4.5+";
 export type TournamentStatus = "draft" | "registration_open" | "registration_closed" | "in_progress" | "completed" | "cancelled";
 export type TournamentRegistrationStatus = "confirmed" | "waitlist" | "withdrawn";
 export type TournamentMatchStatus = "pending" | "in_progress" | "completed" | "bye";
-export type TournamentBracket = "winners" | "losers" | "grand_final";
+export type TournamentBracket = "winners" | "losers" | "grand_final" | "playoff";
 
 export type GroupType = "ladder_league" | "free_play";
 

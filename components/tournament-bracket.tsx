@@ -9,11 +9,12 @@ interface Props {
   format: TournamentFormat;
   canManage: boolean;
   tournamentId: string;
+  division?: string;
 }
 
-export function TournamentBracketView({ matches, format, canManage, tournamentId }: Props) {
+export function TournamentBracketView({ matches, format, canManage, tournamentId, division }: Props) {
   if (format === "round_robin") {
-    return <RoundRobinView matches={matches} canManage={canManage} tournamentId={tournamentId} />;
+    return <RoundRobinView matches={matches} canManage={canManage} tournamentId={tournamentId} division={division} />;
   }
   return <EliminationBracketView matches={matches} format={format} canManage={canManage} tournamentId={tournamentId} />;
 }
@@ -138,16 +139,260 @@ function RoundRobinView({
   matches,
   canManage,
   tournamentId,
+  division,
+}: {
+  matches: TournamentMatch[];
+  canManage: boolean;
+  tournamentId: string;
+  division?: string;
+}) {
+  const router = useRouter();
+  const [advancing, setAdvancing] = useState(false);
+  const [advanceError, setAdvanceError] = useState("");
+
+  // Separate pool play from playoff matches
+  const poolMatches = matches.filter((m) => m.bracket === "winners" || m.bracket === "losers");
+  const playoffMatches = matches.filter((m) => m.bracket === "playoff");
+
+  // Check for two-pool setup
+  const poolAMatches = poolMatches.filter((m) => m.bracket === "winners");
+  const poolBMatches = poolMatches.filter((m) => m.bracket === "losers");
+  const hasTwoPools = poolBMatches.length > 0;
+
+  // Check if all pool matches are complete
+  const poolComplete = poolMatches.length > 0 && poolMatches.every(
+    (m) => m.status === "completed" || m.status === "bye"
+  );
+
+  const hasPlayoffs = playoffMatches.length > 0;
+
+  async function handleAdvanceToPlayoffs() {
+    if (!division) return;
+    setAdvancing(true);
+    setAdvanceError("");
+    const res = await fetch(`/api/tournaments/${tournamentId}/divisions`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "advance_to_playoffs", division }),
+    });
+    if (res.ok) {
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => null);
+      setAdvanceError(data?.error ?? "Failed to advance");
+    }
+    setAdvancing(false);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Pool Standings + Matches */}
+      {hasTwoPools ? (
+        <>
+          <PoolSection
+            label="Pool A"
+            matches={poolAMatches}
+            canManage={canManage}
+            tournamentId={tournamentId}
+          />
+          <PoolSection
+            label="Pool B"
+            matches={poolBMatches}
+            canManage={canManage}
+            tournamentId={tournamentId}
+          />
+        </>
+      ) : (
+        <PoolSection
+          label="Pool Play"
+          matches={poolAMatches}
+          canManage={canManage}
+          tournamentId={tournamentId}
+        />
+      )}
+
+      {/* Advance to Playoffs button */}
+      {canManage && poolComplete && !hasPlayoffs && division && (
+        <div className="card">
+          <h3 className="text-sm font-semibold text-dark-200 mb-2">Pool Play Complete</h3>
+          <p className="text-xs text-surface-muted mb-3">
+            All pool matches are finished. Advance to the playoff bracket to determine the winner.
+            {hasTwoPools
+              ? " Top 3 from each pool will be seeded into a 6-team playoff."
+              : " Top 4 teams will be seeded into a 4-team playoff."}
+          </p>
+          <button
+            onClick={handleAdvanceToPlayoffs}
+            disabled={advancing}
+            className="btn-primary disabled:opacity-50"
+          >
+            {advancing ? "Generating..." : "Advance to Playoffs"}
+          </button>
+          {advanceError && <p className="text-xs text-red-400 mt-2">{advanceError}</p>}
+        </div>
+      )}
+
+      {/* Playoff Bracket */}
+      {hasPlayoffs && (
+        <PlayoffBracketView
+          matches={playoffMatches}
+          canManage={canManage}
+          tournamentId={tournamentId}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Shows standings table + matches for a single pool.
+ */
+function PoolSection({
+  label,
+  matches,
+  canManage,
+  tournamentId,
+}: {
+  label: string;
+  matches: TournamentMatch[];
+  canManage: boolean;
+  tournamentId: string;
+}) {
+  const rounds = Array.from(new Set(matches.map((m) => m.round))).sort((a, b) => a - b);
+
+  // Compute standings
+  const standings = computeStandings(matches);
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider">{label}</h3>
+
+      {/* Standings Table */}
+      {standings.length > 0 && (
+        <div className="card overflow-x-auto p-0">
+          <table className="min-w-full divide-y divide-surface-border">
+            <thead className="bg-surface-overlay">
+              <tr>
+                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted w-8">#</th>
+                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
+                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">W</th>
+                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">L</th>
+                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">+/-</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border bg-surface-raised">
+              {standings.map((s, i) => (
+                <tr key={s.id}>
+                  <td className="px-2 sm:px-4 py-2 text-sm text-surface-muted">{i + 1}</td>
+                  <td className="px-2 sm:px-4 py-2 text-sm font-medium text-dark-100">{s.name}</td>
+                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold text-teal-300">{s.wins}</td>
+                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold text-red-400">{s.losses}</td>
+                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold">
+                    <span className={s.pointDiff > 0 ? "text-teal-300" : s.pointDiff < 0 ? "text-red-400" : "text-surface-muted"}>
+                      {s.pointDiff > 0 ? "+" : ""}{s.pointDiff}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Matches by Round */}
+      {rounds.map((round) => {
+        const roundMatches = matches
+          .filter((m) => m.round === round)
+          .sort((a, b) => a.match_number - b.match_number);
+
+        return (
+          <div key={round}>
+            <h4 className="text-sm font-semibold text-dark-200 mb-2">Round {round}</h4>
+            <div className="space-y-2">
+              {roundMatches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  canManage={canManage}
+                  tournamentId={tournamentId}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Playoff bracket view: shows semifinal/quarterfinal rounds,
+ * final, and 3rd place game.
+ */
+function PlayoffBracketView({
+  matches,
+  canManage,
+  tournamentId,
 }: {
   matches: TournamentMatch[];
   canManage: boolean;
   tournamentId: string;
 }) {
-  const rounds = Array.from(new Set(matches.map((m) => m.round))).sort(
-    (a, b) => a - b
-  );
+  const maxRound = Math.max(...matches.map((m) => m.round), 0);
+  const rounds = Array.from(new Set(matches.map((m) => m.round))).sort((a, b) => a - b);
 
-  // Compute standings
+  const roundLabels = (round: number): string => {
+    if (round === maxRound) return "Finals";
+    if (round === maxRound - 1) return "Semifinals";
+    return `Round ${round}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-dark-200 uppercase tracking-wider">Playoffs</h3>
+      <div className="overflow-x-auto">
+        <div className="flex gap-6 min-w-max pb-4">
+          {rounds.map((round) => {
+            const roundMatches = matches
+              .filter((m) => m.round === round)
+              .sort((a, b) => a.match_number - b.match_number);
+
+            return (
+              <div key={round} className="flex flex-col gap-4" style={{ minWidth: 220 }}>
+                <p className="text-xs font-medium text-surface-muted text-center">
+                  {roundLabels(round)}
+                </p>
+                {roundMatches.map((match) => {
+                  const isThirdPlace = round === maxRound && match.match_number === 2;
+                  return (
+                    <div key={match.id}>
+                      {isThirdPlace && (
+                        <p className="text-xs text-surface-muted mb-1 text-center">3rd Place</p>
+                      )}
+                      {round === maxRound && match.match_number === 1 && (
+                        <p className="text-xs text-surface-muted mb-1 text-center">Championship</p>
+                      )}
+                      <MatchCard
+                        match={match}
+                        canManage={canManage}
+                        tournamentId={tournamentId}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Compute standings from a set of matches.
+ */
+function computeStandings(matches: TournamentMatch[]) {
   const standings = new Map<string, { name: string; wins: number; losses: number; pointDiff: number }>();
 
   for (const m of matches) {
@@ -186,68 +431,9 @@ function RoundRobinView({
     }
   }
 
-  const sortedStandings = Array.from(standings.entries())
+  return Array.from(standings.entries())
     .map(([id, s]) => ({ id, ...s }))
     .sort((a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff);
-
-  return (
-    <div className="space-y-6">
-      {/* Standings */}
-      {sortedStandings.length > 0 && (
-        <div className="card overflow-x-auto p-0">
-          <table className="min-w-full divide-y divide-surface-border">
-            <thead className="bg-surface-overlay">
-              <tr>
-                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted w-8">#</th>
-                <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
-                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">W</th>
-                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">L</th>
-                <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">+/-</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-surface-border bg-surface-raised">
-              {sortedStandings.map((s, i) => (
-                <tr key={s.id}>
-                  <td className="px-2 sm:px-4 py-2 text-sm text-surface-muted">{i + 1}</td>
-                  <td className="px-2 sm:px-4 py-2 text-sm font-medium text-dark-100">{s.name}</td>
-                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold text-teal-300">{s.wins}</td>
-                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold text-red-400">{s.losses}</td>
-                  <td className="px-2 sm:px-4 py-2 text-center text-sm font-semibold">
-                    <span className={s.pointDiff > 0 ? "text-teal-300" : s.pointDiff < 0 ? "text-red-400" : "text-surface-muted"}>
-                      {s.pointDiff > 0 ? "+" : ""}{s.pointDiff}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Matches by Round */}
-      {rounds.map((round) => {
-        const roundMatches = matches
-          .filter((m) => m.round === round)
-          .sort((a, b) => a.match_number - b.match_number);
-
-        return (
-          <div key={round}>
-            <h3 className="text-sm font-semibold text-dark-200 mb-2">Round {round}</h3>
-            <div className="space-y-2">
-              {roundMatches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  canManage={canManage}
-                  tournamentId={tournamentId}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 }
 
 // ============================================================
