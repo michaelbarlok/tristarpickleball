@@ -108,6 +108,16 @@ export default async function SheetDetailPage({
   const isFull = confirmed.length >= sheet.player_limit;
   const isAdmin = profile.role === "admin";
 
+  // Check for an active (non-complete) session on this sheet
+  const { data: activeSessions } = await supabase
+    .from("shootout_sessions")
+    .select("id, status")
+    .eq("sheet_id", id)
+    .neq("status", "session_complete")
+    .limit(1);
+
+  const activeSession = activeSessions?.[0] ?? null;
+
   // Add-member: admins always, regular members when allow_member_guests is on
   const canAddMembers = isAdmin || (sheet.allow_member_guests && !signupClosed);
   const registeredPlayerIds = new Set(
@@ -246,6 +256,7 @@ export default async function SheetDetailPage({
                 sheetId={sheet.id}
                 groupId={sheet.group_id}
                 confirmedPlayerIds={confirmed.map((r: Registration) => r.player_id)}
+                activeSession={activeSession}
               />
             )}
             <AdminDeleteSheet sheetId={sheet.id} />

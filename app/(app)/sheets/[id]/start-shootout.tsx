@@ -8,18 +8,37 @@ interface StartShootoutProps {
   sheetId: string;
   groupId: string;
   confirmedPlayerIds: string[];
+  activeSession?: { id: string; status: string } | null;
 }
 
 export function StartShootout({
   sheetId,
   groupId,
   confirmedPlayerIds,
+  activeSession,
 }: StartShootoutProps) {
   const { supabase } = useSupabase();
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [numCourts, setNumCourts] = useState<number | null>(null);
+
+  // If there's already an active session, show a link to it instead
+  if (activeSession) {
+    return (
+      <div>
+        <a
+          href={`/admin/sessions/${activeSession.id}`}
+          className="btn-secondary w-full sm:w-auto text-center"
+        >
+          View Active Session ({activeSession.status.replace(/_/g, " ")})
+        </a>
+        <p className="mt-1 text-xs text-surface-muted">
+          Complete the current session before starting a new one.
+        </p>
+      </div>
+    );
+  }
 
   // Compute valid court options (4-5 players per court)
   const courtOptions = Array.from(
@@ -46,6 +65,20 @@ export function StartShootout({
     setError(null);
 
     try {
+      // Block if there's already an active (non-complete) session
+      const { data: activeSessions } = await supabase
+        .from("shootout_sessions")
+        .select("id, status")
+        .eq("sheet_id", sheetId)
+        .neq("status", "session_complete")
+        .limit(1);
+
+      if (activeSessions && activeSessions.length > 0) {
+        setError("There is already an active session for this sheet. Complete it before starting a new one.");
+        setStarting(false);
+        return;
+      }
+
       // Check for a previous completed session on the same sheet
       const { data: prevSessions } = await supabase
         .from("shootout_sessions")
