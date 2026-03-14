@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { AdminDeleteButton } from "@/components/delete-tournament-button";
 import Link from "next/link";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -65,13 +66,14 @@ export default async function AdminTournamentsPage() {
                 <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {t.creator?.display_name ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm">
+                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm space-x-3">
                   <Link
                     href={`/tournaments/${t.id}`}
                     className="text-brand-600 hover:text-brand-500"
                   >
                     View
                   </Link>
+                  <AdminDeleteButton tournamentId={t.id} />
                 </td>
               </tr>
             ))}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TournamentRegistrationButton } from "@/components/tournament-registration";
 import { TournamentBracketView } from "@/components/tournament-bracket";
 import { DivisionReview } from "@/components/division-review";
+import { DeleteTournamentButton } from "@/components/delete-tournament-button";
 import { getDivisionLabel } from "@/lib/divisions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -208,6 +209,14 @@ export default async function TournamentDetailPage({
         </>
       )}
 
+      {/* Delete — always visible to admins/organizers */}
+      {canManage && (
+        <div className="card">
+          <h2 className="text-sm font-semibold text-dark-200 mb-3">Danger Zone</h2>
+          <DeleteTournamentButton tournamentId={id} />
+        </div>
+      )}
+
       {/* Brackets by Division */}
       {matches.length > 0 && (
         <div className="space-y-8">
@@ -239,6 +248,7 @@ export default async function TournamentDetailPage({
                 format={tournament.format}
                 canManage={canManage}
                 tournamentId={id}
+                division={div === "__none__" ? undefined : div}
               />
             </div>
           ))}
