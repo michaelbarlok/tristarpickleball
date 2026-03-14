@@ -184,6 +184,24 @@ export async function PUT(
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
 
+  // Fetch existing match state to detect edits (winner change)
+  const { data: existingMatch } = await supabase
+    .from("tournament_matches")
+    .select("*")
+    .eq("id", match_id)
+    .single();
+
+  if (!existingMatch) {
+    return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  }
+
+  const previousWinner = existingMatch.status === "completed" ? existingMatch.winner_id : null;
+  const previousLoser = previousWinner
+    ? (existingMatch.player1_id === previousWinner ? existingMatch.player2_id : existingMatch.player1_id)
+    : null;
+  const isEdit = previousWinner !== null;
+  const winnerChanged = isEdit && previousWinner !== winner_id;
+
   // Update match score
   const { data: match, error: updateError } = await supabase
     .from("tournament_matches")
@@ -295,6 +313,65 @@ export async function PUT(
           }
         }
       }
+    }
+  }
+
+  // If editing a completed match and the winner changed, fix downstream slots
+  // Replace old winner/loser references in later rounds with new winner/loser
+  if (winnerChanged && (match.bracket === "winners" || match.bracket === "playoff" || match.bracket === "grand_final")) {
+    const newLoser = match.player1_id === winner_id ? match.player2_id : match.player1_id;
+
+    // Find all matches in later rounds of the same bracket/division
+    let laterQuery = supabase
+      .from("tournament_matches")
+      .select("id, player1_id, player2_id, winner_id, status, round")
+      .eq("tournament_id", tournamentId)
+      .eq("bracket", match.bracket)
+      .gt("round", match.round);
+
+    if (match.division) {
+      laterQuery = laterQuery.eq("division", match.division);
+    }
+
+    const { data: laterMatches } = await laterQuery;
+    if (laterMatches) {
+      for (const lm of laterMatches) {
+        const updates: Record<string, string | null> = {};
+
+        // Swap old winner → new winner in player slots
+        if (lm.player1_id === previousWinner) updates.player1_id = winner_id;
+        if (lm.player2_id === previousWinner) updates.player2_id = winner_id;
+        // Swap old loser → new loser in player slots (for 3rd place routing)
+        if (previousLoser && newLoser) {
+          if (lm.player1_id === previousLoser) updates.player1_id = newLoser;
+          if (lm.player2_id === previousLoser) updates.player2_id = newLoser;
+        }
+        // If the later match recorded old winner as the winner, update that too
+        if (lm.winner_id === previousWinner) updates.winner_id = winner_id;
+
+        if (Object.keys(updates).length > 0) {
+          await supabase
+            .from("tournament_matches")
+            .update(updates)
+            .eq("id", lm.id);
+        }
+      }
+    }
+
+    // Also handle cross-bracket: playoff 3rd place game references from SF losers
+    if (match.bracket === "playoff") {
+      let thirdPlaceQuery = supabase
+        .from("tournament_matches")
+        .select("id, player1_id, player2_id, winner_id")
+        .eq("tournament_id", tournamentId)
+        .eq("bracket", "playoff")
+        .gt("round", match.round);
+
+      if (match.division) {
+        thirdPlaceQuery = thirdPlaceQuery.eq("division", match.division);
+      }
+
+      // Already handled above via laterMatches for same bracket
     }
   }
 

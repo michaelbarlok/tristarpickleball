@@ -619,10 +619,21 @@ function MatchCard({
   const p2Name = (match as any).player2?.display_name ?? (match.player2_id ? "TBD" : "—");
   const isCompleted = match.status === "completed";
   const isBye = match.status === "bye";
-  const canScore = canManage && match.player1_id && match.player2_id && !isCompleted && !isBye;
+  const canScore = canManage && match.player1_id && match.player2_id && !isBye;
+  const canEnterNew = canScore && !isCompleted;
+  const canEdit = canScore && isCompleted;
 
   const p1Won = isCompleted && match.winner_id === match.player1_id;
   const p2Won = isCompleted && match.winner_id === match.player2_id;
+
+  function openEdit() {
+    // Pre-fill with existing scores when editing
+    if (isCompleted && match.score1.length > 0) {
+      setScore1Input(match.score1.join(","));
+      setScore2Input(match.score2.join(","));
+    }
+    setScoring(true);
+  }
 
   async function submitScore() {
     setSaving(true);
@@ -699,13 +710,22 @@ function MatchCard({
             )}
           </div>
 
-          {/* Score Entry */}
-          {canScore && !scoring && (
+          {/* Score Entry / Edit */}
+          {canEnterNew && !scoring && (
             <button
               onClick={() => setScoring(true)}
               className="text-xs text-brand-300 font-medium mt-1 hover:text-brand-200"
             >
               Enter score
+            </button>
+          )}
+
+          {canEdit && !scoring && (
+            <button
+              onClick={openEdit}
+              className="text-xs text-surface-muted font-medium mt-1 hover:text-brand-300"
+            >
+              Edit score
             </button>
           )}
 
