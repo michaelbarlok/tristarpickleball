@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getGroupBySlug, getGroupMembers } from "@/lib/queries/group";
+import { getPlayerStats } from "@/lib/queries/free-play";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { formatShortDate } from "@/lib/utils";
+import { FreePlayLeaderboard } from "../leaderboard";
 
 export default async function LadderPage({
   params,
@@ -26,8 +28,11 @@ export default async function LadderPage({
   const group = await getGroupBySlug(slug);
   if (!group) notFound();
 
+  const isFreePlay = group.group_type === "free_play";
+
   // getGroupMembers already sorts by ranking sheet order
-  const members = await getGroupMembers(group.id);
+  const members = isFreePlay ? [] : await getGroupMembers(group.id);
+  const playerStats = isFreePlay ? await getPlayerStats(group.id) : [];
 
   return (
     <div className="space-y-6">
@@ -50,15 +55,22 @@ export default async function LadderPage({
           <span className="text-sm text-surface-muted">/</span>
         </div>
         <h1 className="mt-1 text-2xl font-bold text-dark-100">
-          {group.name} Ladder
+          {group.name} {isFreePlay ? "Leaderboard" : "Ladder"}
         </h1>
         <p className="mt-1 text-surface-muted">
-          Rankings sorted by Step, Win %, Last Played, and Sessions.
+          {isFreePlay
+            ? "Standings sorted by wins and point differential."
+            : "Rankings sorted by Step, Win %, Last Played, and Sessions."}
         </p>
       </div>
 
-      {/* Ladder Table */}
-      <div className="card overflow-hidden p-0">
+      {/* Free Play Leaderboard */}
+      {isFreePlay && (
+        <FreePlayLeaderboard stats={playerStats as any} currentPlayerId={profile?.id} />
+      )}
+
+      {/* Ladder Table (Ladder League only) */}
+      {!isFreePlay && <div className="card overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-surface-border">
             <thead className="bg-surface-overlay">
@@ -142,7 +154,7 @@ export default async function LadderPage({
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

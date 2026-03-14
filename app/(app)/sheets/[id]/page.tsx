@@ -240,7 +240,8 @@ export default async function SheetDetailPage({
         <div className="card space-y-4">
           <h3 className="text-sm font-semibold text-dark-100">Admin Actions</h3>
           <div className="flex flex-wrap gap-3">
-            {(sheet.status === "open" || sheet.status === "closed") && (
+            {(sheet.status === "open" || sheet.status === "closed") &&
+              (sheet as any).group?.group_type !== "free_play" && (
               <StartShootout
                 sheetId={sheet.id}
                 groupId={sheet.group_id}

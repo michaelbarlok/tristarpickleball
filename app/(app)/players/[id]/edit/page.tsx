@@ -22,6 +22,12 @@ export default function EditProfilePage() {
   const [homeCourt, setHomeCourt] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [duprId, setDuprId] = useState("");
+  const [duprSingles, setDuprSingles] = useState("");
+  const [duprDoubles, setDuprDoubles] = useState("");
+  const [usapMemberId, setUsapMemberId] = useState("");
+  const [usapTier, setUsapTier] = useState("");
+  const [usapExpiration, setUsapExpiration] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [groupAdminIds, setGroupAdminIds] = useState<Set<string>>(new Set());
@@ -69,6 +75,12 @@ export default function EditProfilePage() {
       setHomeCourt(profile.home_court ?? "");
       setSkillLevel(profile.skill_level?.toString() ?? "");
       setAvatarUrl(profile.avatar_url ?? null);
+      setDuprId(profile.dupr_id ?? "");
+      setDuprSingles(profile.dupr_singles_rating?.toString() ?? "");
+      setDuprDoubles(profile.dupr_doubles_rating?.toString() ?? "");
+      setUsapMemberId(profile.usap_member_id ?? "");
+      setUsapTier(profile.usap_tier ?? "");
+      setUsapExpiration(profile.usap_expiration ?? "");
 
       // If caller is admin, fetch groups and this player's group admin roles
       if (callerIsAdmin) {
@@ -143,6 +155,12 @@ export default function EditProfilePage() {
       bio: bio.trim() || null,
       home_court: homeCourt.trim() || null,
       skill_level: skillLevel ? parseFloat(skillLevel) : null,
+      dupr_id: duprId.trim() || null,
+      dupr_singles_rating: duprSingles ? parseFloat(duprSingles) : null,
+      dupr_doubles_rating: duprDoubles ? parseFloat(duprDoubles) : null,
+      usap_member_id: usapMemberId.trim() || null,
+      usap_tier: usapTier.trim() || null,
+      usap_expiration: usapExpiration || null,
     };
 
     const { error: updateError } = await supabase
@@ -279,6 +297,103 @@ export default function EditProfilePage() {
               rows={3}
               placeholder="Tell others a bit about yourself (optional)"
             />
+          </div>
+
+          {/* DUPR Section */}
+          <div className="border-t border-surface-border pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-dark-100 mb-3">DUPR</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="duprId" className="block text-sm font-medium text-dark-200 mb-1">
+                  DUPR ID
+                </label>
+                <input
+                  id="duprId"
+                  type="text"
+                  value={duprId}
+                  onChange={(e) => setDuprId(e.target.value)}
+                  className="input"
+                  placeholder="(optional)"
+                />
+              </div>
+              <div>
+                <label htmlFor="duprSingles" className="block text-sm font-medium text-dark-200 mb-1">
+                  Singles Rating
+                </label>
+                <input
+                  id="duprSingles"
+                  type="number"
+                  step="0.01"
+                  min="2.0"
+                  max="8.0"
+                  value={duprSingles}
+                  onChange={(e) => setDuprSingles(e.target.value)}
+                  className="input"
+                  placeholder="e.g. 4.25"
+                />
+              </div>
+              <div>
+                <label htmlFor="duprDoubles" className="block text-sm font-medium text-dark-200 mb-1">
+                  Doubles Rating
+                </label>
+                <input
+                  id="duprDoubles"
+                  type="number"
+                  step="0.01"
+                  min="2.0"
+                  max="8.0"
+                  value={duprDoubles}
+                  onChange={(e) => setDuprDoubles(e.target.value)}
+                  className="input"
+                  placeholder="e.g. 3.75"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* USA Pickleball Section */}
+          <div className="border-t border-surface-border pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-dark-100 mb-3">USA Pickleball</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="usapMemberId" className="block text-sm font-medium text-dark-200 mb-1">
+                  Membership ID
+                </label>
+                <input
+                  id="usapMemberId"
+                  type="text"
+                  value={usapMemberId}
+                  onChange={(e) => setUsapMemberId(e.target.value)}
+                  className="input"
+                  placeholder="(optional)"
+                />
+              </div>
+              <div>
+                <label htmlFor="usapTier" className="block text-sm font-medium text-dark-200 mb-1">
+                  Membership Tier
+                </label>
+                <input
+                  id="usapTier"
+                  type="text"
+                  value={usapTier}
+                  onChange={(e) => setUsapTier(e.target.value)}
+                  className="input"
+                  placeholder="e.g. Premium"
+                />
+              </div>
+              <div>
+                <label htmlFor="usapExpiration" className="block text-sm font-medium text-dark-200 mb-1">
+                  Expiration Date
+                </label>
+                <input
+                  id="usapExpiration"
+                  type="date"
+                  value={usapExpiration}
+                  onChange={(e) => setUsapExpiration(e.target.value)}
+                  className="input"
+                />
+              </div>
+            </div>
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}

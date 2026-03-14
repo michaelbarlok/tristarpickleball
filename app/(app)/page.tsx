@@ -171,6 +171,51 @@ export default async function HomePage() {
           </div>
         </div>
 
+        {/* Tournaments */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+          <div className="order-2 sm:order-1 card p-0 overflow-hidden">
+            <div className="bg-surface-overlay px-4 py-2.5 border-b border-surface-border">
+              <p className="text-xs font-medium uppercase text-surface-muted">Upcoming Tournaments</p>
+            </div>
+            <div className="divide-y divide-surface-border">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-dark-100">Spring Singles Championship</p>
+                  <p className="text-xs text-surface-muted">Apr 12 &middot; Single Elimination</p>
+                </div>
+                <span className="badge-green">Open</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-dark-100">Doubles Round Robin</p>
+                  <p className="text-xs text-surface-muted">Apr 19 &middot; Round Robin</p>
+                </div>
+                <span className="badge-blue">16/32</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-dark-100">Summer Classic</p>
+                  <p className="text-xs text-surface-muted">May 3 &middot; Double Elimination</p>
+                </div>
+                <span className="badge-yellow">Coming Soon</span>
+              </div>
+            </div>
+          </div>
+          <div className="order-1 sm:order-2 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-900/50">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5 text-teal-300">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .982-3.172M12 3.75a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-dark-100">Tournaments</h2>
+            </div>
+            <p className="text-dark-200">
+              Compete in organized tournaments with brackets, seeding, and multiple formats. From casual round robins to competitive single and double elimination — find the right tournament for your skill level.
+            </p>
+          </div>
+        </div>
+
         {/* Groups & Community */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
           <div className="order-2 sm:order-1 card p-0 overflow-hidden">

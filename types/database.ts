@@ -48,6 +48,8 @@ export type TournamentRegistrationStatus = "confirmed" | "waitlist" | "withdrawn
 export type TournamentMatchStatus = "pending" | "in_progress" | "completed" | "bye";
 export type TournamentBracket = "winners" | "losers" | "grand_final";
 
+export type GroupType = "ladder_league" | "free_play";
+
 // ============================================================
 // Core Tables
 // ============================================================
@@ -67,6 +69,12 @@ export interface Profile {
   member_since: string;
   preferred_notify: string[];
   role: UserRole;
+  dupr_id?: string | null;
+  dupr_singles_rating?: number | null;
+  dupr_doubles_rating?: number | null;
+  usap_member_id?: string | null;
+  usap_tier?: string | null;
+  usap_expiration?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,6 +126,7 @@ export interface ShootoutGroup {
   name: string;
   slug: string;
   description?: string | null;
+  group_type: GroupType;
   created_by: string;
   is_active: boolean;
   created_at: string;
@@ -334,6 +343,38 @@ export interface TournamentMatch {
   player2?: Profile;
   winner?: Profile;
   tournament?: Tournament;
+}
+
+// ============================================================
+// Free Play
+// ============================================================
+
+export interface FreePlayMatch {
+  id: string;
+  group_id: string;
+  created_by: string;
+  played_at: string;
+  team_a_p1: string;
+  team_a_p2?: string | null;
+  team_b_p1: string;
+  team_b_p2?: string | null;
+  score_a: number;
+  score_b: number;
+  notes?: string | null;
+  created_at: string;
+  // Relations
+  team_a_p1_profile?: Profile;
+  team_a_p2_profile?: Profile;
+  team_b_p1_profile?: Profile;
+  team_b_p2_profile?: Profile;
+}
+
+export interface FreePlayPlayerStats {
+  group_id: string;
+  player_id: string;
+  wins: number;
+  losses: number;
+  total_point_diff: number;
 }
 
 // ============================================================

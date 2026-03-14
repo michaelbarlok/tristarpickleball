@@ -1,9 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { getGroupBySlug, getGroupMembers, getGroupSheets, isGroupMember } from "@/lib/queries/group";
+import { getRecentMatches, getPlayerStats } from "@/lib/queries/free-play";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
+import { LogMatchForm } from "./log-match";
+import { FreePlayLeaderboard } from "./leaderboard";
 
 export default async function GroupPage({
   params,
@@ -30,7 +33,11 @@ export default async function GroupPage({
   const sheets = await getGroupSheets(group.id);
   const isMember = profile ? await isGroupMember(group.id, profile.id) : false;
 
-  // Show all members in a scrollable list
+  const isFreePlay = group.group_type === "free_play";
+
+  // Fetch free play data if applicable
+  const recentMatches = isFreePlay ? await getRecentMatches(group.id, 10) : [];
+  const playerStats = isFreePlay ? await getPlayerStats(group.id) : [];
 
   return (
     <div className="space-y-8">
@@ -57,7 +64,7 @@ export default async function GroupPage({
           {isMember ? (
             <span className="badge-green">Member</span>
           ) : (
-            <JoinButton groupId={group.id} playerId={profile!.id} />
+            <JoinButton groupId={group.id} playerId={profile!.id} groupType={group.group_type} />
           )}
         </div>
       </div>
@@ -80,12 +87,62 @@ export default async function GroupPage({
           href={`/groups/${slug}/ladder`}
           className="card hover:ring-brand-500/30 transition-shadow"
         >
-          <p className="text-sm text-surface-muted">Ladder</p>
+          <p className="text-sm text-surface-muted">
+            {isFreePlay ? "Leaderboard" : "Ladder"}
+          </p>
           <p className="mt-1 text-sm font-medium text-brand-600">
-            View full rankings &rarr;
+            View full {isFreePlay ? "standings" : "rankings"} &rarr;
           </p>
         </Link>
       </div>
+
+      {/* Free Play: Log Match + Recent Matches */}
+      {isFreePlay && isMember && (
+        <LogMatchForm groupId={group.id} members={members as any} />
+      )}
+
+      {isFreePlay && playerStats.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-dark-100">
+            Standings
+          </h2>
+          <FreePlayLeaderboard stats={playerStats as any} currentPlayerId={profile?.id} />
+        </section>
+      )}
+
+      {isFreePlay && recentMatches.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold text-dark-100">
+            Recent Matches
+          </h2>
+          <div className="space-y-2">
+            {recentMatches.map((match) => (
+              <div key={match.id} className="card flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-dark-100">
+                    {match.team_a_p1_profile?.display_name}
+                    {match.team_a_p2_profile && ` & ${match.team_a_p2_profile.display_name}`}
+                  </span>
+                  <span className="text-surface-muted"> vs </span>
+                  <span className="font-medium text-dark-100">
+                    {match.team_b_p1_profile?.display_name}
+                    {match.team_b_p2_profile && ` & ${match.team_b_p2_profile.display_name}`}
+                  </span>
+                </div>
+                <div className="text-sm font-bold">
+                  <span className={match.score_a > match.score_b ? "text-teal-300" : "text-dark-200"}>
+                    {match.score_a}
+                  </span>
+                  <span className="text-surface-muted mx-1">-</span>
+                  <span className={match.score_b > match.score_a ? "text-teal-300" : "text-dark-200"}>
+                    {match.score_b}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Upcoming Sheets */}
       {sheets.length > 0 && (
@@ -131,12 +188,16 @@ export default async function GroupPage({
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                     Player
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                    Step
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                    Win %
-                  </th>
+                  {!isFreePlay && (
+                    <>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                        Step
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+                        Win %
+                      </th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border bg-surface-raised">
@@ -168,12 +229,16 @@ export default async function GroupPage({
                         </span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
-                      {member.current_step}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
-                      {member.win_pct}%
-                    </td>
+                    {!isFreePlay && (
+                      <>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                          {member.current_step}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                          {member.win_pct}%
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
                 {members.length === 0 && (
@@ -202,23 +267,27 @@ export default async function GroupPage({
 function JoinButton({
   groupId,
   playerId,
+  groupType,
 }: {
   groupId: string;
   playerId: string;
+  groupType: string;
 }) {
   async function requestToJoin() {
     "use server";
 
     const supabase = await createClient();
 
-    // Fetch group preferences for start step
-    const { data: prefs } = await supabase
-      .from("group_preferences")
-      .select("new_player_start_step")
-      .eq("group_id", groupId)
-      .single();
-
-    const startStep = prefs?.new_player_start_step ?? 5;
+    let startStep = 5;
+    if (groupType === "ladder_league") {
+      // Fetch group preferences for start step
+      const { data: prefs } = await supabase
+        .from("group_preferences")
+        .select("new_player_start_step")
+        .eq("group_id", groupId)
+        .single();
+      startStep = prefs?.new_player_start_step ?? 5;
+    }
 
     await supabase.from("group_memberships").insert({
       group_id: groupId,

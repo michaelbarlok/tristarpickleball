@@ -58,6 +58,8 @@ export default async function AdminGroupsPage() {
 
     if (!profile) return;
 
+    const groupType = (formData.get("group_type") as string) || "ladder_league";
+
     const { data: newGroup, error } = await supabase
       .from("shootout_groups")
       .insert({
@@ -65,12 +67,13 @@ export default async function AdminGroupsPage() {
         slug,
         created_by: profile.id,
         is_active: true,
+        group_type: groupType,
       })
       .select("id")
       .single();
 
-    if (!error && newGroup) {
-      // Create default preferences
+    if (!error && newGroup && groupType === "ladder_league") {
+      // Create default preferences (only for ladder league groups)
       await supabase.from("group_preferences").insert({
         group_id: newGroup.id,
         pct_window_sessions: 10,
@@ -139,17 +142,30 @@ export default async function AdminGroupsPage() {
         <h2 className="mb-4 text-lg font-semibold text-dark-100">
           Create New Group
         </h2>
-        <form action={createGroup} className="flex gap-3">
-          <input
-            type="text"
-            name="name"
-            placeholder="Group name (e.g. Monday Shootout)"
-            required
-            className="input flex-1"
-          />
-          <button type="submit" className="btn-primary whitespace-nowrap">
-            Create Group
-          </button>
+        <form action={createGroup} className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              name="name"
+              placeholder="Group name (e.g. Monday Shootout)"
+              required
+              className="input flex-1"
+            />
+            <button type="submit" className="btn-primary whitespace-nowrap">
+              Create Group
+            </button>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-dark-200">Type:</span>
+            <label className="flex items-center gap-2 text-sm text-dark-100">
+              <input type="radio" name="group_type" value="ladder_league" defaultChecked className="text-brand-600 focus:ring-brand-500" />
+              Ladder League
+            </label>
+            <label className="flex items-center gap-2 text-sm text-dark-100">
+              <input type="radio" name="group_type" value="free_play" className="text-brand-600 focus:ring-brand-500" />
+              Free Play
+            </label>
+          </div>
         </form>
       </div>
 
@@ -161,6 +177,9 @@ export default async function AdminGroupsPage() {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+                  Type
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Slug
@@ -193,6 +212,11 @@ export default async function AdminGroupsPage() {
                   <tr key={group.id}>
                     <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-dark-100">
                       {group.name}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm">
+                      <span className={group.group_type === "free_play" ? "badge-yellow" : "badge-blue"}>
+                        {group.group_type === "free_play" ? "Free Play" : "Ladder"}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-surface-muted">
                       {group.slug}
@@ -254,7 +278,7 @@ export default async function AdminGroupsPage() {
               {(!groups || groups.length === 0) && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-8 text-center text-sm text-surface-muted"
                   >
                     No groups created yet.

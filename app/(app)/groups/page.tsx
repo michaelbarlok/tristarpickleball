@@ -64,7 +64,12 @@ export default async function GroupsPage() {
               >
                 <div className="flex items-start justify-between">
                   <h3 className="font-semibold text-dark-100">{group.name}</h3>
-                  {isJoined && <span className="badge-green">Joined</span>}
+                  <div className="flex items-center gap-2">
+                    <span className={group.group_type === "free_play" ? "badge-yellow" : "badge-blue"}>
+                      {group.group_type === "free_play" ? "Free Play" : "Ladder"}
+                    </span>
+                    {isJoined && <span className="badge-green">Joined</span>}
+                  </div>
                 </div>
                 {group.description && (
                   <p className="mt-1 text-sm text-surface-muted line-clamp-2">
