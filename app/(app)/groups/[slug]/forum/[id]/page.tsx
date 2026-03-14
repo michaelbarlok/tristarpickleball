@@ -325,7 +325,7 @@ export default function ThreadPage() {
           </span>
         </div>
         <div className="prose prose-sm max-w-none text-dark-200 whitespace-pre-wrap">
-          <RenderMentions text={thread.body} />
+          <RenderMentions text={thread.body} members={members} />
         </div>
 
         {/* Poll */}
@@ -420,7 +420,7 @@ export default function ThreadPage() {
               </span>
             </div>
             <div className="text-sm text-dark-200 whitespace-pre-wrap">
-              <RenderMentions text={reply.body} />
+              <RenderMentions text={reply.body} members={members} />
             </div>
           </div>
         ))}
@@ -452,18 +452,36 @@ export default function ThreadPage() {
 // Mention rendering
 // ============================================================
 
-/** Renders @mentions as highlighted spans */
-function RenderMentions({ text }: { text: string }) {
+/** Renders @mentions as clickable links to player profiles */
+function RenderMentions({
+  text,
+  members,
+}: {
+  text: string;
+  members: { id: string; display_name: string }[];
+}) {
   const parts = text.split(/(@[A-Z][a-zA-Z'-]+(?:\s+[A-Z][a-zA-Z'-]+)+)/g);
   return (
     <>
       {parts.map((part, i) => {
         if (part.match(/^@[A-Z][a-zA-Z'-]+(?:\s+[A-Z][a-zA-Z'-]+)+$/)) {
+          const name = part.slice(1); // remove @
+          const member = members.find(
+            (m) => m.display_name.toLowerCase() === name.toLowerCase()
+          );
+          if (member) {
+            return (
+              <Link
+                key={i}
+                href={`/players/${member.id}`}
+                className="text-brand-400 font-medium hover:underline"
+              >
+                {part}
+              </Link>
+            );
+          }
           return (
-            <span
-              key={i}
-              className="text-brand-400 font-medium"
-            >
+            <span key={i} className="text-brand-400 font-medium">
               {part}
             </span>
           );
