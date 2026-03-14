@@ -1,6 +1,7 @@
 "use client";
 
 import { useSupabase } from "@/components/providers/supabase-provider";
+import { MentionTextarea } from "@/components/mention-textarea";
 import { useParams } from "next/navigation";
 import { useEffect, useState, Fragment } from "react";
 import Link from "next/link";
@@ -503,91 +504,3 @@ function parseMentions(text: string): string[] {
   return [...new Set(names)];
 }
 
-// ============================================================
-// Mention Textarea with autocomplete
-// ============================================================
-
-function MentionTextarea({
-  value,
-  onChange,
-  members,
-  maxLength,
-  minHeight,
-  placeholder,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  members: { id: string; display_name: string }[];
-  maxLength: number;
-  minHeight: string;
-  placeholder?: string;
-}) {
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<typeof members>([]);
-  const [mentionStart, setMentionStart] = useState(-1);
-  const [cursorPos, setCursorPos] = useState(0);
-
-  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const newValue = e.target.value;
-    onChange(newValue);
-
-    const pos = e.target.selectionStart;
-    setCursorPos(pos);
-    const textBeforeCursor = newValue.slice(0, pos);
-    const atIndex = textBeforeCursor.lastIndexOf("@");
-
-    if (atIndex >= 0) {
-      const charBefore = atIndex > 0 ? textBeforeCursor[atIndex - 1] : " ";
-      if (charBefore === " " || charBefore === "\n" || atIndex === 0) {
-        const query = textBeforeCursor.slice(atIndex + 1).toLowerCase();
-        if (!query.includes("\n")) {
-          const filtered = members.filter((m) =>
-            m.display_name.toLowerCase().includes(query)
-          );
-          setSuggestions(filtered.slice(0, 5));
-          setShowSuggestions(filtered.length > 0);
-          setMentionStart(atIndex);
-          return;
-        }
-      }
-    }
-
-    setShowSuggestions(false);
-  }
-
-  function selectMember(member: { id: string; display_name: string }) {
-    const before = value.slice(0, mentionStart);
-    const after = value.slice(cursorPos);
-    const newValue = `${before}@${member.display_name}${after.startsWith(" ") || after.startsWith("\n") || after === "" ? "" : " "}${after}`;
-    onChange(newValue);
-    setShowSuggestions(false);
-  }
-
-  return (
-    <div className="relative">
-      <textarea
-        value={value}
-        onChange={handleChange}
-        className="input"
-        style={{ minHeight }}
-        maxLength={maxLength}
-        placeholder={placeholder}
-        required
-      />
-      {showSuggestions && (
-        <div className="absolute z-20 mt-1 w-64 rounded-lg border border-surface-border bg-surface-raised shadow-lg overflow-hidden">
-          {suggestions.map((member) => (
-            <button
-              key={member.id}
-              type="button"
-              onClick={() => selectMember(member)}
-              className="block w-full px-3 py-2 text-left text-sm text-dark-200 hover:bg-surface-overlay"
-            >
-              @{member.display_name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
