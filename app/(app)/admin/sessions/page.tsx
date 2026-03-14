@@ -36,8 +36,8 @@ export default async function AdminSessionsPage() {
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Date</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Group</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Status</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Courts</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Round</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Courts</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Round</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Actions</th>
             </tr>
           </thead>
@@ -61,10 +61,10 @@ export default async function AdminSessionsPage() {
                     {session.status.replace("_", " ")}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {session.num_courts}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {session.current_round}
                 </td>
                 <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm">

@@ -153,7 +153,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 gap-3">
+        <div className="flex flex-1 flex-wrap gap-3">
           {/* Search */}
           <input
             type="text"
@@ -210,25 +210,25 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
         <table className="min-w-full divide-y divide-surface-border">
           <thead className="bg-surface-overlay">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Member
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="hidden md:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Skill
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Step
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Role
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Actions
               </th>
             </tr>
@@ -239,7 +239,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
               return (
                 <tr key={profile.id} className="hover:bg-surface-overlay">
                   {/* Avatar + Name */}
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3">
                     <div className="flex items-center gap-3">
                       {profile.avatar_url ? (
                         <img
@@ -262,17 +262,17 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
                   </td>
 
                   {/* Email */}
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-surface-muted">
+                  <td className="hidden md:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-surface-muted">
                     {profile.email}
                   </td>
 
                   {/* Skill Level */}
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-surface-muted">
+                  <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-surface-muted">
                     {profile.skill_level ?? "—"}
                   </td>
 
                   {/* Step (from group memberships) */}
-                  <td className="px-4 py-3 text-sm text-surface-muted">
+                  <td className="hidden sm:table-cell px-2 sm:px-4 py-3 text-sm text-surface-muted">
                     {memberships.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {memberships.map((m, i) => (
@@ -287,7 +287,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
                   </td>
 
                   {/* Status */}
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3">
                     <span
                       className={
                         profile.is_active ? "badge-green" : "badge-red"
@@ -298,7 +298,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
                   </td>
 
                   {/* Role */}
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3">
                     <span
                       className={
                         profile.role === "admin" ? "badge-yellow" : "badge-gray"
@@ -309,7 +309,7 @@ export function MembersTable({ profiles, membershipMap }: MembersTableProps) {
                   </td>
 
                   {/* Actions */}
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-2 sm:px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2 flex-wrap">
                       {memberships.map((m) => {
                         const key = `${profile.id}-${m.groupId}`;

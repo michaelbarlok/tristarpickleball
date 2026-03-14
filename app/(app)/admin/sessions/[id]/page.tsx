@@ -372,7 +372,7 @@ export default function AdminSessionDetailPage() {
       {/* Lifecycle Progress */}
       <div className="card">
         <h2 className="text-sm font-semibold text-dark-200 mb-4">Session Lifecycle</h2>
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2">
           {LIFECYCLE_ORDER.map((status, idx) => (
             <div key={status} className="flex items-center">
               <div
@@ -665,9 +665,9 @@ export default function AdminSessionDetailPage() {
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Player</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Checked In</th>
               <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Court</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Step Before</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Step After</th>
-              <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Finish</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Step Before</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Step After</th>
+              <th className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium uppercase text-surface-muted">Finish</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-border bg-surface-raised">
@@ -686,10 +686,10 @@ export default function AdminSessionDetailPage() {
                 <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {p.court_number ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {p.step_before}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {p.step_after != null ? (
                     <span className={p.step_after < p.step_before ? "text-teal-300 font-medium" : p.step_after > p.step_before ? "text-red-400 font-medium" : ""}>
                       {p.step_after}
@@ -700,7 +700,7 @@ export default function AdminSessionDetailPage() {
                     "—"
                   )}
                 </td>
-                <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
+                <td className="hidden sm:table-cell whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-dark-200">
                   {p.pool_finish != null ? `${p.pool_finish}${["st","nd","rd"][p.pool_finish-1] ?? "th"}` : "—"}
                 </td>
               </tr>

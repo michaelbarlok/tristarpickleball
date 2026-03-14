@@ -25,22 +25,22 @@ export function FreePlayLeaderboard({
         <table className="min-w-full divide-y divide-surface-border">
           <thead className="bg-surface-overlay">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 #
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Player
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                 W
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                 L
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Win %
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
+              <th className="px-2 sm:px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                 Pt Diff
               </th>
             </tr>
@@ -57,11 +57,11 @@ export function FreePlayLeaderboard({
                     stat.player_id === currentPlayerId && "bg-brand-900/40"
                   )}
                 >
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-surface-muted">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-sm text-surface-muted">
                     {index + 1}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <div className="flex items-center gap-3">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       {stat.player?.avatar_url ? (
                         <img
                           src={stat.player.avatar_url}
@@ -78,16 +78,16 @@ export function FreePlayLeaderboard({
                       </span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-teal-300 font-medium">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-teal-300 font-medium">
                     {stat.wins}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-red-400 font-medium">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-red-400 font-medium">
                     {stat.losses}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-dark-100">
                     {winPct}%
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-dark-100">
+                  <td className="whitespace-nowrap px-2 sm:px-4 py-3 text-right text-sm text-dark-100">
                     <span className={stat.total_point_diff > 0 ? "text-teal-300" : stat.total_point_diff < 0 ? "text-red-400" : ""}>
                       {stat.total_point_diff > 0 ? "+" : ""}
                       {stat.total_point_diff}
@@ -100,7 +100,7 @@ export function FreePlayLeaderboard({
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-8 text-center text-sm text-surface-muted"
+                  className="px-2 sm:px-4 py-8 text-center text-sm text-surface-muted"
                 >
                   No matches played yet.
                 </td>
