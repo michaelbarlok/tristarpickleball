@@ -113,17 +113,20 @@ export async function POST(
   }
 
   // Auto-advance bye matches: if one player is null, the other wins
-  const byeMatches = bracketMatches.filter((m) => m.status === "bye");
-  for (const bye of byeMatches) {
-    const winnerId = bye.player1_id || bye.player2_id;
-    if (winnerId) {
-      await supabase
-        .from("tournament_matches")
-        .update({ winner_id: winnerId, status: "completed" })
-        .eq("tournament_id", tournamentId)
-        .eq("round", bye.round)
-        .eq("match_number", bye.match_number)
-        .eq("bracket", bye.bracket);
+  // Only for elimination brackets — in round robin, byes simply skip (no stats recorded)
+  if (tournament.format !== "round_robin") {
+    const byeMatches = bracketMatches.filter((m) => m.status === "bye");
+    for (const bye of byeMatches) {
+      const winnerId = bye.player1_id || bye.player2_id;
+      if (winnerId) {
+        await supabase
+          .from("tournament_matches")
+          .update({ winner_id: winnerId, status: "completed" })
+          .eq("tournament_id", tournamentId)
+          .eq("round", bye.round)
+          .eq("match_number", bye.match_number)
+          .eq("bracket", bye.bracket);
+      }
     }
   }
 
