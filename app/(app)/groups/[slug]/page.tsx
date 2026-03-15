@@ -82,7 +82,7 @@ export default async function GroupPage({
             <>
               <span className="badge-green">Member</span>
               {group.visibility === "private" && (
-                <InviteButton groupId={group.id} groupType={group.group_type} slug={slug} />
+                <InviteButton groupId={group.id} groupType={group.group_type} />
               )}
             </>
           ) : (
