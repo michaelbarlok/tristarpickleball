@@ -35,6 +35,8 @@ export default async function AdminGroupsPage() {
     "use server";
 
     const name = formData.get("name") as string;
+    const city = (formData.get("city") as string)?.trim() || null;
+    const state = (formData.get("state") as string)?.trim() || null;
     if (!name?.trim()) return;
 
     const slug = name
@@ -66,6 +68,8 @@ export default async function AdminGroupsPage() {
       .insert({
         name: name.trim(),
         slug,
+        city,
+        state,
         created_by: profile.id,
         is_active: true,
         group_type: groupType,
@@ -165,6 +169,20 @@ export default async function AdminGroupsPage() {
             <button type="submit" className="btn-primary whitespace-nowrap">
               Create Group
             </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="text"
+              name="city"
+              placeholder="City (e.g. Athens)"
+              className="input"
+            />
+            <input
+              type="text"
+              name="state"
+              placeholder="State (e.g. GA)"
+              className="input"
+            />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-dark-200">Type:</span>

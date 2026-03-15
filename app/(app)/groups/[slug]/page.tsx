@@ -56,6 +56,11 @@ export default async function GroupPage({
           <h1 className="mt-1 text-2xl font-bold text-dark-100">
             {group.name}
           </h1>
+          {(group.city || group.state) && (
+            <p className="mt-1 text-xs text-surface-muted">
+              {[group.city, group.state].filter(Boolean).join(", ")}
+            </p>
+          )}
           {group.description && (
             <p className="mt-1 text-surface-muted">{group.description}</p>
           )}

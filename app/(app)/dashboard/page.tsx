@@ -132,6 +132,11 @@ export default async function DashboardPage() {
                 className="card hover:ring-brand-500/30 transition-shadow"
               >
                 <h3 className="font-semibold text-dark-100">{m.group?.name}</h3>
+                {(m.group?.city || m.group?.state) && (
+                  <p className="text-xs text-surface-muted">
+                    {[m.group?.city, m.group?.state].filter(Boolean).join(", ")}
+                  </p>
+                )}
                 <div className="mt-2 flex gap-4 text-sm text-surface-muted">
                   <span>Step {m.current_step}</span>
                   <span>{m.win_pct}% Win</span>
