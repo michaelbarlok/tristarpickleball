@@ -37,9 +37,9 @@ export function LandingNav() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm font-medium text-dark-200 hover:text-dark-100 transition-colors">
+            <Link href="/#features" className="text-sm font-medium text-dark-200 hover:text-dark-100 transition-colors">
               Features
-            </a>
+            </Link>
             <Link href="/contact" className="text-sm font-medium text-dark-200 hover:text-dark-100 transition-colors">
               Contact
             </Link>
@@ -85,13 +85,13 @@ export function LandingNav() {
           {/* Panel */}
           <div className="absolute top-16 left-0 right-0 bg-dark-950 border-b border-surface-border md:hidden">
             <div className="px-4 py-4 space-y-1">
-              <a
-                href="#features"
+              <Link
+                href="/#features"
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-lg px-3 py-2.5 text-sm font-medium text-dark-200 hover:text-dark-100 hover:bg-surface-raised transition-colors"
               >
                 Features
-              </a>
+              </Link>
               <Link
                 href="/contact"
                 onClick={() => setMenuOpen(false)}
