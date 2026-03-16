@@ -176,6 +176,12 @@ export default async function TournamentDetailPage({
               )}
             </p>
           </div>
+          {tournament.max_teams_per_division && (
+            <div>
+              <p className="text-xs text-surface-muted uppercase font-medium">Max per Division</p>
+              <p className="text-sm text-dark-100">{tournament.max_teams_per_division} teams</p>
+            </div>
+          )}
           {tournament.entry_fee && (
             <div>
               <p className="text-xs text-surface-muted uppercase font-medium">Entry Fee</p>
@@ -242,7 +248,14 @@ export default async function TournamentDetailPage({
           divisions={tournament.divisions ?? []}
           myRegistration={myRegistration}
           playerCap={tournament.player_cap}
+          maxTeamsPerDivision={tournament.max_teams_per_division}
           confirmedCount={confirmedRegistrations.length}
+          divisionConfirmedCounts={Object.fromEntries(
+            (tournament.divisions ?? []).map((code: string) => [
+              code,
+              confirmedRegistrations.filter((r: any) => r.division === code).length,
+            ])
+          )}
         />
       )}
 
@@ -358,17 +371,47 @@ export default async function TournamentDetailPage({
           <h2 className="text-lg font-semibold text-dark-100 mb-3">
             Waitlist ({waitlistRegistrations.length})
           </h2>
-          <div className="card space-y-1">
-            {waitlistRegistrations.map((reg, i) => (
-              <div key={reg.id} className="flex items-center gap-2 text-sm">
-                <span className="text-surface-muted w-6">{i + 1}.</span>
-                <span className="text-dark-200">{(reg as any).player?.display_name ?? "Unknown"}</span>
-                {tournament.type === "doubles" && (reg as any).partner && (
-                  <span className="text-surface-muted">& {(reg as any).partner?.display_name}</span>
-                )}
-              </div>
-            ))}
-          </div>
+          {/* Group waitlist by division if there are multiple divisions */}
+          {(tournament.divisions?.length ?? 0) > 1 ? (
+            <div className="space-y-4">
+              {(tournament.divisions ?? []).map((code: string) => {
+                const divWaitlist = waitlistRegistrations
+                  .filter((r: any) => r.division === code)
+                  .sort((a, b) => (a.waitlist_position ?? 999) - (b.waitlist_position ?? 999));
+                if (divWaitlist.length === 0) return null;
+                return (
+                  <div key={code}>
+                    <p className="text-xs font-medium text-surface-muted uppercase mb-1">
+                      {getDivisionLabel(code)}
+                    </p>
+                    <div className="card space-y-1">
+                      {divWaitlist.map((reg, i) => (
+                        <div key={reg.id} className="flex items-center gap-2 text-sm">
+                          <span className="text-surface-muted w-6">{i + 1}.</span>
+                          <span className="text-dark-200">{(reg as any).player?.display_name ?? "Unknown"}</span>
+                          {tournament.type === "doubles" && (reg as any).partner && (
+                            <span className="text-surface-muted">& {(reg as any).partner?.display_name}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card space-y-1">
+              {waitlistRegistrations.map((reg, i) => (
+                <div key={reg.id} className="flex items-center gap-2 text-sm">
+                  <span className="text-surface-muted w-6">{i + 1}.</span>
+                  <span className="text-dark-200">{(reg as any).player?.display_name ?? "Unknown"}</span>
+                  {tournament.type === "doubles" && (reg as any).partner && (
+                    <span className="text-surface-muted">& {(reg as any).partner?.display_name}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
