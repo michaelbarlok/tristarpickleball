@@ -20,6 +20,7 @@ export default function EditTournamentPage() {
   const [startTime, setStartTime] = useState("");
   const [location, setLocation] = useState("");
   const [playerCap, setPlayerCap] = useState("");
+  const [maxTeamsPerDivision, setMaxTeamsPerDivision] = useState("");
   const [entryFee, setEntryFee] = useState("");
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
   const [registrationClosesAt, setRegistrationClosesAt] = useState("");
@@ -52,6 +53,7 @@ export default function EditTournamentPage() {
         setStartTime(data.start_time ?? "");
         setLocation(data.location);
         setPlayerCap(data.player_cap?.toString() ?? "");
+        setMaxTeamsPerDivision(data.max_teams_per_division?.toString() ?? "");
         setEntryFee(data.entry_fee ?? "");
         setRegistrationOpensAt(data.registration_opens_at?.slice(0, 16) ?? "");
         setRegistrationClosesAt(data.registration_closes_at?.slice(0, 16) ?? "");
@@ -109,6 +111,7 @@ export default function EditTournamentPage() {
         start_time: startTime || null,
         location: location.trim(),
         player_cap: playerCap ? parseInt(playerCap) : null,
+        max_teams_per_division: maxTeamsPerDivision ? parseInt(maxTeamsPerDivision) : null,
         entry_fee: entryFee.trim() || null,
         registration_opens_at: registrationOpensAt || null,
         registration_closes_at: registrationClosesAt || null,
@@ -272,8 +275,16 @@ export default function EditTournamentPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-dark-200 mb-1">Player/Team Cap</label>
-            <input type="number" value={playerCap} onChange={(e) => setPlayerCap(e.target.value)} className="input" min={2} />
+            <input type="number" value={playerCap} onChange={(e) => setPlayerCap(e.target.value)} className="input" min={2} placeholder="Leave blank for unlimited" />
+            <p className="text-xs text-surface-muted mt-1">Overall tournament cap</p>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-dark-200 mb-1">Max Teams per Division</label>
+            <input type="number" value={maxTeamsPerDivision} onChange={(e) => setMaxTeamsPerDivision(e.target.value)} className="input" min={2} placeholder="Leave blank for unlimited" />
+            <p className="text-xs text-surface-muted mt-1">Extra teams go on a waitlist</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-dark-200 mb-1">Entry Fee</label>
             <input type="text" value={entryFee} onChange={(e) => setEntryFee(e.target.value)} className="input" />

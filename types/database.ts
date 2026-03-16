@@ -336,6 +336,7 @@ export interface Tournament {
   start_time?: string | null;
   location: string;
   player_cap?: number | null;
+  max_teams_per_division?: number | null;
   entry_fee?: string | null;
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;

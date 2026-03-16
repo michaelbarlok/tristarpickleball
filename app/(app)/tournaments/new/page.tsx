@@ -19,6 +19,7 @@ export default function CreateTournamentPage() {
   const [startTime, setStartTime] = useState("");
   const [location, setLocation] = useState("");
   const [playerCap, setPlayerCap] = useState("");
+  const [maxTeamsPerDivision, setMaxTeamsPerDivision] = useState("");
   const [entryFee, setEntryFee] = useState("");
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
   const [registrationClosesAt, setRegistrationClosesAt] = useState("");
@@ -111,6 +112,7 @@ export default function CreateTournamentPage() {
         start_time: startTime || null,
         location: location.trim(),
         player_cap: playerCap ? parseInt(playerCap) : null,
+        max_teams_per_division: maxTeamsPerDivision ? parseInt(maxTeamsPerDivision) : null,
         entry_fee: entryFee.trim() || null,
         registration_opens_at: registrationOpensAt || null,
         registration_closes_at: registrationClosesAt || null,
@@ -352,7 +354,7 @@ export default function CreateTournamentPage() {
           </div>
         </div>
 
-        {/* Player Cap & Entry Fee */}
+        {/* Player Cap, Max Per Division & Entry Fee */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-dark-200 mb-1">
@@ -366,7 +368,24 @@ export default function CreateTournamentPage() {
               min={2}
               placeholder="Leave blank for unlimited"
             />
+            <p className="text-xs text-surface-muted mt-1">Overall tournament cap</p>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-dark-200 mb-1">
+              Max Teams per Division
+            </label>
+            <input
+              type="number"
+              value={maxTeamsPerDivision}
+              onChange={(e) => setMaxTeamsPerDivision(e.target.value)}
+              className="input"
+              min={2}
+              placeholder="Leave blank for unlimited"
+            />
+            <p className="text-xs text-surface-muted mt-1">Extra teams go on a waitlist</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-dark-200 mb-1">
               Entry Fee

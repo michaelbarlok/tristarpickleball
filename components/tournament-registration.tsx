@@ -12,7 +12,9 @@ interface Props {
   divisions: string[];
   myRegistration: TournamentRegistration | null;
   playerCap: number | null | undefined;
+  maxTeamsPerDivision: number | null | undefined;
   confirmedCount: number;
+  divisionConfirmedCounts: Record<string, number>;
 }
 
 export function TournamentRegistrationButton({
@@ -21,7 +23,9 @@ export function TournamentRegistrationButton({
   divisions,
   myRegistration,
   playerCap,
+  maxTeamsPerDivision,
   confirmedCount,
+  divisionConfirmedCounts,
 }: Props) {
   const { supabase } = useSupabase();
   const router = useRouter();
@@ -116,7 +120,7 @@ export function TournamentRegistrationButton({
               <p className="text-xs text-surface-muted">Division: {getDivisionLabel(myRegistration.division)}</p>
             )}
             {myRegistration.waitlist_position && (
-              <p className="text-xs text-surface-muted">Position #{myRegistration.waitlist_position}</p>
+              <p className="text-xs text-surface-muted">Waitlist position #{myRegistration.waitlist_position}</p>
             )}
           </div>
           <button onClick={handleWithdraw} disabled={loading} className="btn-secondary text-xs !border-red-500/50 !text-red-400">
@@ -128,7 +132,13 @@ export function TournamentRegistrationButton({
     );
   }
 
-  const isFull = playerCap != null && confirmedCount >= playerCap;
+  // Determine if the selected division (or overall tournament) is full
+  const activeDivision = selectedDivision || (divisions.length === 1 ? divisions[0] : "");
+  const divisionFull = maxTeamsPerDivision != null && activeDivision
+    ? (divisionConfirmedCounts[activeDivision] ?? 0) >= maxTeamsPerDivision
+    : false;
+  const overallFull = playerCap != null && confirmedCount >= playerCap;
+  const willWaitlist = divisionFull || overallFull;
 
   return (
     <div className="card space-y-3">
@@ -143,13 +153,25 @@ export function TournamentRegistrationButton({
             required
           >
             <option value="">Select a division...</option>
-            {divisions.map((code) => (
-              <option key={code} value={code}>
-                {getDivisionLabel(code)}
-              </option>
-            ))}
+            {divisions.map((code) => {
+              const count = divisionConfirmedCounts[code] ?? 0;
+              const full = maxTeamsPerDivision != null && count >= maxTeamsPerDivision;
+              return (
+                <option key={code} value={code}>
+                  {getDivisionLabel(code)}
+                  {maxTeamsPerDivision != null ? ` (${count}/${maxTeamsPerDivision}${full ? " — Waitlist" : ""})` : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
+      )}
+
+      {/* Division full notice */}
+      {activeDivision && divisionFull && (
+        <p className="text-xs text-amber-400">
+          This division is full. You&apos;ll be added to the waitlist and notified by email if a spot opens up.
+        </p>
       )}
 
       {/* Partner search for doubles */}
@@ -206,7 +228,7 @@ export function TournamentRegistrationButton({
         disabled={loading}
         className="btn-primary w-full"
       >
-        {loading ? "Registering..." : isFull ? "Join Waitlist" : "Register"}
+        {loading ? "Registering..." : willWaitlist ? "Join Waitlist" : "Register"}
       </button>
     </div>
   );

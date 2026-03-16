@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { notify } from "@/lib/notify";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -69,24 +70,52 @@ export async function POST(
     }
   }
 
-  // Count confirmed registrations
-  const { count: confirmedCount } = await supabase
-    .from("tournament_registrations")
-    .select("*", { count: "exact", head: true })
-    .eq("tournament_id", tournamentId)
-    .eq("status", "confirmed");
+  // Determine if the division is full
+  let isFull = false;
 
-  const isFull = tournament.player_cap && (confirmedCount ?? 0) >= tournament.player_cap;
+  // Check per-division cap
+  if (tournament.max_teams_per_division && division) {
+    const { count: divisionConfirmed } = await supabase
+      .from("tournament_registrations")
+      .select("*", { count: "exact", head: true })
+      .eq("tournament_id", tournamentId)
+      .eq("division", division)
+      .eq("status", "confirmed");
+
+    if ((divisionConfirmed ?? 0) >= tournament.max_teams_per_division) {
+      isFull = true;
+    }
+  }
+
+  // Also check overall tournament cap
+  if (!isFull && tournament.player_cap) {
+    const { count: confirmedCount } = await supabase
+      .from("tournament_registrations")
+      .select("*", { count: "exact", head: true })
+      .eq("tournament_id", tournamentId)
+      .eq("status", "confirmed");
+
+    if ((confirmedCount ?? 0) >= tournament.player_cap) {
+      isFull = true;
+    }
+  }
+
   const status = isFull ? "waitlist" : "confirmed";
 
-  // Compute waitlist position if needed
+  // Compute waitlist position (per-division if division exists)
   let waitlistPosition = null;
   if (status === "waitlist") {
-    const { count: waitlistCount } = await supabase
+    let query = supabase
       .from("tournament_registrations")
       .select("*", { count: "exact", head: true })
       .eq("tournament_id", tournamentId)
       .eq("status", "waitlist");
+
+    if (division) {
+      query = query.eq("division", division);
+    }
+
+    const { count: waitlistCount } = await query;
     waitlistPosition = (waitlistCount ?? 0) + 1;
   }
 
@@ -135,10 +164,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  // Find registration
+  // Find registration (include division for waitlist promotion)
   const { data: reg } = await supabase
     .from("tournament_registrations")
-    .select("id, status")
+    .select("id, status, division")
     .eq("tournament_id", tournamentId)
     .or(`player_id.eq.${profile.id},partner_id.eq.${profile.id}`)
     .neq("status", "withdrawn")
@@ -149,6 +178,7 @@ export async function DELETE(
   }
 
   const wasConfirmed = reg.status === "confirmed";
+  const division = reg.division;
 
   // Withdraw
   await supabase
@@ -156,24 +186,123 @@ export async function DELETE(
     .update({ status: "withdrawn" })
     .eq("id", reg.id);
 
-  // If was confirmed and there's a waitlist, promote the first person
+  // If was confirmed, promote the first waitlisted team from the same division
   if (wasConfirmed) {
-    const { data: nextWaitlist } = await supabase
-      .from("tournament_registrations")
-      .select("id")
-      .eq("tournament_id", tournamentId)
-      .eq("status", "waitlist")
-      .order("waitlist_position", { ascending: true })
-      .limit(1)
-      .single();
-
-    if (nextWaitlist) {
-      await supabase
-        .from("tournament_registrations")
-        .update({ status: "confirmed", waitlist_position: null })
-        .eq("id", nextWaitlist.id);
-    }
+    await promoteTournamentWaitlist(tournamentId, division);
   }
 
   return NextResponse.json({ status: "withdrawn" });
+}
+
+/**
+ * Promote the first waitlisted registration for a tournament division.
+ * Sends an email/notification to the promoted player.
+ */
+async function promoteTournamentWaitlist(
+  tournamentId: string,
+  division: string | null
+): Promise<void> {
+  const supabase = await createServiceClient();
+
+  // Find next waitlisted registration in the same division
+  let query = supabase
+    .from("tournament_registrations")
+    .select("id, player_id, partner_id")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "waitlist")
+    .order("waitlist_position", { ascending: true })
+    .limit(1);
+
+  if (division) {
+    query = query.eq("division", division);
+  }
+
+  const { data: nextWaitlist } = await query.single();
+
+  if (!nextWaitlist) return;
+
+  // Promote to confirmed
+  await supabase
+    .from("tournament_registrations")
+    .update({ status: "confirmed", waitlist_position: null })
+    .eq("id", nextWaitlist.id);
+
+  // Reorder remaining waitlist positions for this division
+  let reorderQuery = supabase
+    .from("tournament_registrations")
+    .select("id, waitlist_position")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "waitlist")
+    .order("waitlist_position", { ascending: true });
+
+  if (division) {
+    reorderQuery = reorderQuery.eq("division", division);
+  }
+
+  const { data: remaining } = await reorderQuery;
+  if (remaining && remaining.length > 0) {
+    for (let i = 0; i < remaining.length; i++) {
+      if (remaining[i].waitlist_position !== i + 1) {
+        await supabase
+          .from("tournament_registrations")
+          .update({ waitlist_position: i + 1 })
+          .eq("id", remaining[i].id);
+      }
+    }
+  }
+
+  // Fetch tournament info for notification
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("title")
+    .eq("id", tournamentId)
+    .single();
+
+  const tournamentTitle = tournament?.title ?? "the tournament";
+
+  // Fetch player's user_id for notification
+  const { data: playerProfile } = await supabase
+    .from("profiles")
+    .select("id, user_id")
+    .eq("id", nextWaitlist.player_id)
+    .single();
+
+  if (playerProfile) {
+    await notify({
+      userId: playerProfile.id,
+      type: "tournament_registration",
+      title: "You're in!",
+      body: `A spot opened up and you've been promoted from the waitlist for ${tournamentTitle}.`,
+      link: `/tournaments/${tournamentId}`,
+      emailTemplate: "TournamentWaitlistPromoted",
+      emailData: {
+        tournamentTitle,
+        tournamentId,
+      },
+    });
+  }
+
+  // Also notify partner if doubles
+  if (nextWaitlist.partner_id) {
+    const { data: partnerProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", nextWaitlist.partner_id)
+      .single();
+
+    if (partnerProfile) {
+      await notify({
+        userId: partnerProfile.id,
+        type: "tournament_registration",
+        title: "You're in!",
+        body: `A spot opened up and your team has been promoted from the waitlist for ${tournamentTitle}.`,
+        link: `/tournaments/${tournamentId}`,
+        emailTemplate: "TournamentWaitlistPromoted",
+        emailData: {
+          tournamentTitle,
+          tournamentId,
+        },
+      });
+    }
+  }
 }
