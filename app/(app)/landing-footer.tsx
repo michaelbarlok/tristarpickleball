@@ -18,24 +18,24 @@ export function LandingFooter() {
             <h3 className="text-sm font-semibold text-dark-100">Product</h3>
             <ul className="mt-3 space-y-2">
               <li>
-                <a href="#features" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
+                <Link href="/#features" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
                   Features
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#signup-sheets" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
+                <Link href="/#signup-sheets" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
                   Sign-Up Sheets
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#rankings" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
+                <Link href="/#rankings" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
                   Rankings
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#tournaments" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
+                <Link href="/#tournaments" className="text-sm text-dark-300 hover:text-dark-100 transition-colors">
                   Tournaments
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
