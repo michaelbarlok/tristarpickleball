@@ -5,9 +5,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { formatDate, formatTime } from "@/lib/utils";
-import { LogMatchForm } from "./log-match";
 import { FreePlayLeaderboard } from "./leaderboard";
 import { InviteButton } from "./invite-button";
+import { ResetStatsButton } from "./reset-stats-button";
 import type { GroupWithPreferences } from "@/lib/queries/group";
 
 export default async function GroupPage({
@@ -83,6 +83,18 @@ export default async function GroupPage({
 
   const recentMatches = isFreePlay ? await getRecentMatches(group.id, 10) : [];
   const playerStats = isFreePlay ? await getPlayerStats(group.id) : [];
+
+  // Check for active free play session
+  let activeSessionId: string | null = null;
+  if (isFreePlay && isMember) {
+    const { data: activeSession } = await supabase
+      .from("free_play_sessions")
+      .select("id")
+      .eq("group_id", group.id)
+      .eq("status", "active")
+      .maybeSingle();
+    activeSessionId = activeSession?.id ?? null;
+  }
 
   // Build the "next" URL to use when redirecting unauthenticated users to login
   const nextUrl = token
@@ -193,9 +205,17 @@ export default async function GroupPage({
         </Link>
       </div>
 
-      {/* Free Play: Log Match + Recent Matches */}
+      {/* Free Play: Session + Standings */}
       {isFreePlay && isMember && (
-        <LogMatchForm groupId={group.id} members={members as any} />
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/groups/${slug}/session`}
+            className={activeSessionId ? "btn-primary" : "btn-primary"}
+          >
+            {activeSessionId ? "Continue Session" : "Start Session"}
+          </Link>
+          <ResetStatsButton groupId={group.id} />
+        </div>
       )}
 
       {isFreePlay && playerStats.length > 0 && (
