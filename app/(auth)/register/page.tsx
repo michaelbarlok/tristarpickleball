@@ -2,12 +2,22 @@
 
 import { useSupabase } from "@/components/providers/supabase-provider";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const { supabase } = useSupabase();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,10 +38,12 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
 
-    // Sign up with Supabase Auth
+    // Sign up with Supabase Auth — pass `next` through the email confirmation link
+    const confirmUrl = `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`;
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: { emailRedirectTo: confirmUrl },
     });
 
     if (authError) {
@@ -90,7 +102,7 @@ export default function RegisterPage() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (oauthError) {
@@ -211,7 +223,10 @@ export default function RegisterPage() {
 
       <p className="mt-4 text-center text-sm text-surface-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-brand-600 hover:text-brand-500">
+        <Link
+          href={next !== "/dashboard" ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+          className="font-medium text-brand-600 hover:text-brand-500"
+        >
           Sign in
         </Link>
       </p>
