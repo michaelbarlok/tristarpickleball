@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { getGroupBySlug, getGroupMembers, getGroupSheets, isGroupMember } from "@/lib/queries/group";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { getGroupMembers, getGroupSheets, isGroupMember } from "@/lib/queries/group";
 import { getRecentMatches, getPlayerStats } from "@/lib/queries/free-play";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,37 +8,92 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { LogMatchForm } from "./log-match";
 import { FreePlayLeaderboard } from "./leaderboard";
 import { InviteButton } from "./invite-button";
+import type { GroupWithPreferences } from "@/lib/queries/group";
 
 export default async function GroupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ token?: string }>;
 }) {
   const { slug } = await params;
+  const { token } = await searchParams;
+
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Get the user's profile (null if not logged in)
+  const profile = user
+    ? (await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single()
+      ).data
+    : null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("user_id", user!.id)
-    .single();
+  // Try fetching the group normally (respects RLS — works for public groups
+  // or private groups the user is already a member of)
+  let group: GroupWithPreferences | null = null;
+  {
+    const { data } = await supabase
+      .from("shootout_groups")
+      .select("*, group_preferences(*)")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .single();
+    group = data as GroupWithPreferences | null;
+  }
 
-  const group = await getGroupBySlug(slug);
+  // For private groups, fall back to token-based access (bypasses RLS)
+  let tokenValid = false;
+  if (!group && token) {
+    const serviceClient = await createServiceClient();
+
+    // Validate the token and get the group_id it belongs to
+    const { data: invite } = await serviceClient
+      .from("group_invites")
+      .select("group_id")
+      .eq("token", token)
+      .maybeSingle();
+
+    if (invite) {
+      const { data: g } = await serviceClient
+        .from("shootout_groups")
+        .select("*, group_preferences(*)")
+        .eq("id", invite.group_id)
+        .eq("slug", slug)
+        .eq("is_active", true)
+        .single();
+
+      if (g) {
+        group = g as GroupWithPreferences;
+        tokenValid = true;
+      }
+    }
+  }
+
   if (!group) notFound();
 
+  const isMember = profile ? await isGroupMember(group.id, profile.id) : false;
   const members = await getGroupMembers(group.id);
   const sheets = await getGroupSheets(group.id);
-  const isMember = profile ? await isGroupMember(group.id, profile.id) : false;
-
   const isFreePlay = group.group_type === "free_play";
 
-  // Fetch free play data if applicable
   const recentMatches = isFreePlay ? await getRecentMatches(group.id, 10) : [];
   const playerStats = isFreePlay ? await getPlayerStats(group.id) : [];
+
+  // Build the "next" URL to use when redirecting unauthenticated users to login
+  const nextUrl = token
+    ? `/groups/${slug}?token=${token}`
+    : `/groups/${slug}`;
+
+  // Whether a non-member should see the "Join Group" button
+  const canJoin =
+    group.visibility === "public" ||
+    tokenValid ||
+    (group.visibility === "private" && isMember);
 
   return (
     <div className="space-y-8">
@@ -66,27 +121,45 @@ export default async function GroupPage({
             <p className="mt-1 text-surface-muted">{group.description}</p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-3">
           <span className={group.visibility === "private" ? "badge-gray" : "badge-green"}>
             {group.visibility === "private" ? "Private" : "Public"}
           </span>
+
           {isMember ? (
             <>
               <span className="badge-green">Member</span>
-              {group.visibility === "private" && (
-                <InviteButton groupId={group.id} groupType={group.group_type} />
-              )}
+              {/* Invite button available to all members of any group */}
+              <InviteButton
+                groupId={group.id}
+                groupSlug={slug}
+                groupName={group.name}
+                groupVisibility={group.visibility}
+              />
             </>
-          ) : (
-            group.visibility === "public" && (
-              <JoinButton groupId={group.id} playerId={profile!.id} groupType={group.group_type} />
+          ) : canJoin ? (
+            /* Non-member who can join (public group, or private via valid token) */
+            user && profile ? (
+              <JoinButton
+                groupId={group.id}
+                playerId={profile.id}
+                groupType={group.group_type}
+                slug={slug}
+              />
+            ) : (
+              /* Unauthenticated — redirect to login, then back here */
+              <Link
+                href={`/login?next=${encodeURIComponent(nextUrl)}`}
+                className="btn-primary"
+              >
+                Join Group
+              </Link>
             )
-          )}
+          ) : null}
+
           {isMember && (
-            <Link
-              href={`/groups/${slug}/forum`}
-              className="btn-secondary"
-            >
+            <Link href={`/groups/${slug}/forum`} className="btn-secondary">
               Forum
             </Link>
           )}
@@ -130,7 +203,10 @@ export default async function GroupPage({
           <h2 className="mb-4 text-lg font-semibold text-dark-100">
             Standings
           </h2>
-          <FreePlayLeaderboard stats={playerStats as any} currentPlayerId={profile?.id} />
+          <FreePlayLeaderboard
+            stats={playerStats as any}
+            currentPlayerId={profile?.id}
+          />
         </section>
       )}
 
@@ -141,24 +217,41 @@ export default async function GroupPage({
           </h2>
           <div className="space-y-2">
             {recentMatches.map((match) => (
-              <div key={match.id} className="card flex items-center justify-between">
+              <div
+                key={match.id}
+                className="card flex items-center justify-between"
+              >
                 <div className="text-sm">
                   <span className="font-medium text-dark-100">
                     {match.team_a_p1_profile?.display_name}
-                    {match.team_a_p2_profile && ` & ${match.team_a_p2_profile.display_name}`}
+                    {match.team_a_p2_profile &&
+                      ` & ${match.team_a_p2_profile.display_name}`}
                   </span>
                   <span className="text-surface-muted"> vs </span>
                   <span className="font-medium text-dark-100">
                     {match.team_b_p1_profile?.display_name}
-                    {match.team_b_p2_profile && ` & ${match.team_b_p2_profile.display_name}`}
+                    {match.team_b_p2_profile &&
+                      ` & ${match.team_b_p2_profile.display_name}`}
                   </span>
                 </div>
                 <div className="text-sm font-bold">
-                  <span className={match.score_a > match.score_b ? "text-teal-300" : "text-dark-200"}>
+                  <span
+                    className={
+                      match.score_a > match.score_b
+                        ? "text-teal-300"
+                        : "text-dark-200"
+                    }
+                  >
                     {match.score_a}
                   </span>
                   <span className="text-surface-muted mx-1">-</span>
-                  <span className={match.score_b > match.score_a ? "text-teal-300" : "text-dark-200"}>
+                  <span
+                    className={
+                      match.score_b > match.score_a
+                        ? "text-teal-300"
+                        : "text-dark-200"
+                    }
+                  >
                     {match.score_b}
                   </span>
                 </div>
@@ -285,26 +378,27 @@ export default async function GroupPage({
 }
 
 // ============================================================
-// Join Button (Client Component inline)
+// Join Button (Server Action)
 // ============================================================
 
 function JoinButton({
   groupId,
   playerId,
   groupType,
+  slug,
 }: {
   groupId: string;
   playerId: string;
   groupType: string;
+  slug: string;
 }) {
-  async function requestToJoin() {
+  async function join() {
     "use server";
 
     const supabase = await createClient();
 
     let startStep = 5;
     if (groupType === "ladder_league") {
-      // Fetch group preferences for start step
       const { data: prefs } = await supabase
         .from("group_preferences")
         .select("new_player_start_step")
@@ -322,13 +416,14 @@ function JoinButton({
     });
 
     const { revalidatePath } = await import("next/cache");
-    revalidatePath(`/groups`);
+    revalidatePath(`/groups/${slug}`);
+    revalidatePath("/groups");
   }
 
   return (
-    <form action={requestToJoin}>
+    <form action={join}>
       <button type="submit" className="btn-primary">
-        Request to Join
+        Join Group
       </button>
     </form>
   );

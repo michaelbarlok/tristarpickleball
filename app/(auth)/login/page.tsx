@@ -2,12 +2,14 @@
 
 import { useSupabase } from "@/components/providers/supabase-provider";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
   const { supabase } = useSupabase();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(next);
     router.refresh();
   }
 
@@ -37,7 +39,7 @@ export default function LoginPage() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     if (oauthError) {
@@ -118,7 +120,10 @@ export default function LoginPage() {
 
       <p className="mt-4 text-center text-sm text-surface-muted">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium text-brand-600 hover:text-brand-500">
+        <Link
+          href={next !== "/dashboard" ? `/register?next=${encodeURIComponent(next)}` : "/register"}
+          className="font-medium text-brand-600 hover:text-brand-500"
+        >
           Register
         </Link>
       </p>
