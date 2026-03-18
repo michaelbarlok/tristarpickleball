@@ -5,14 +5,40 @@ import "./globals.css";
 
 export const dynamic = "force-dynamic";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://pkl.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl),
   title: "PKL",
   description: "Pickleball ladder league platform",
   icons: {
-    icon: "/pkl-icon-192.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/pkl-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     apple: "/pkl-icon-512.png",
   },
   manifest: "/manifest.json",
+  openGraph: {
+    title: "PKL",
+    description: "Pickleball ladder league platform",
+    images: [
+      {
+        url: "/pkl-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "PKL – Pickleball ladder league platform",
+      },
+    ],
+    siteName: "PKL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PKL",
+    description: "Pickleball ladder league platform",
+    images: ["/pkl-logo.png"],
+  },
 };
 
 export default function RootLayout({
