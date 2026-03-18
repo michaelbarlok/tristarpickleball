@@ -9,6 +9,7 @@ import { DeleteTournamentButton } from "@/components/delete-tournament-button";
 import { CoOrganizerManager } from "@/components/co-organizer-manager";
 import { getDivisionLabel } from "@/lib/divisions";
 import { DivisionBrackets } from "./division-brackets";
+import { ContactOrganizersButton } from "@/components/contact-organizers-button";
 import { formatDate, formatTime, formatDateTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -221,6 +222,16 @@ export default async function TournamentDetailPage({
         {tournament.description && (
           <div className="pt-3 border-t border-surface-border">
             <p className="text-sm text-dark-200 whitespace-pre-wrap">{tournament.description}</p>
+          </div>
+        )}
+
+        {/* Contact Organizers — visible to logged-in non-organizers */}
+        {profile && !canManage && (
+          <div className="pt-3 border-t border-surface-border">
+            <ContactOrganizersButton
+              endpoint={`/api/tournaments/${id}/contact-organizers`}
+              label="Contact Organizers"
+            />
           </div>
         )}
 
