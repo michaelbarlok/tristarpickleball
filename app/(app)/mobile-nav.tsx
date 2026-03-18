@@ -300,8 +300,9 @@ export function MobileNav({ profile, isGroupAdmin = false }: { profile: Profile;
             </>
           )}
 
-          {/* Sign out */}
+          {/* Invite + Sign out */}
           <div className="border-t border-surface-border py-1">
+            <InviteButton displayName={profile.display_name} onDone={() => setMoreOpen(false)} />
             <button
               onClick={handleSignOut}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-dark-200 active:bg-surface-overlay"
@@ -359,5 +360,52 @@ export function MobileNav({ profile, isGroupAdmin = false }: { profile: Profile;
         <div className="h-[env(safe-area-inset-bottom)] bg-surface" />
       </nav>
     </>
+  );
+}
+
+function InviteButton({ displayName, onDone }: { displayName: string; onDone: () => void }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleInvite() {
+    const inviteUrl = `${window.location.origin}/register`;
+    const text = `${displayName} invited you to join PKL — a pickleball community for ladder leagues, tournaments, and more. Sign up here:`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join PKL",
+          text,
+          url: inviteUrl,
+        });
+        onDone();
+      } catch (err) {
+        // User cancelled share — do nothing
+        if ((err as Error).name !== "AbortError") {
+          console.error("Share failed:", err);
+        }
+      }
+    } else {
+      // Fallback: copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Last resort: prompt
+        window.prompt("Copy this invite link:", inviteUrl);
+      }
+    }
+  }
+
+  return (
+    <button
+      onClick={handleInvite}
+      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-brand-400 active:bg-surface-overlay"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+      </svg>
+      {copied ? "Link copied!" : "Invite a Player"}
+    </button>
   );
 }
