@@ -5,6 +5,8 @@ import { MobileNav } from "./mobile-nav";
 import { MissingProfile } from "./missing-profile";
 import { LandingNav } from "./landing-nav";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
