@@ -3,6 +3,8 @@ import { SupabaseProvider } from "@/components/providers/supabase-provider";
 import { ToastProvider } from "@/components/toast";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "PKL",
   description: "Pickleball ladder league platform",

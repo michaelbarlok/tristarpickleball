@@ -10,6 +10,7 @@ import { InviteButton } from "./invite-button";
 import { ResetStatsButton } from "./reset-stats-button";
 import { RollingSessionsSetting } from "./rolling-sessions-setting";
 import { CollapsibleMembers } from "./collapsible-members";
+import { ContactOrganizersButton } from "@/components/contact-organizers-button";
 import type { GroupWithPreferences } from "@/lib/queries/group";
 
 export default async function GroupPage({
@@ -189,6 +190,12 @@ export default async function GroupPage({
             <Link href={`/groups/${slug}/forum`} className="btn-secondary">
               Forum
             </Link>
+          )}
+          {isMember && !isGroupAdmin && (
+            <ContactOrganizersButton
+              endpoint={`/api/groups/${group.id}/contact-admins`}
+              label="Contact Admins"
+            />
           )}
         </div>
       </div>
