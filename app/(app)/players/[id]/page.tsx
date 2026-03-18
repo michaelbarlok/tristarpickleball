@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { formatWinPct, formatDate } from "@/lib/utils";
-import type { Profile, GroupMembership, PlayerRating, GameResult, Registration } from "@/types/database";
+import { formatDate } from "@/lib/utils";
+import type { Profile, GroupMembership, GameResult, Registration } from "@/types/database";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -27,13 +27,6 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
     .select("*, group:shootout_groups(*)")
     .eq("player_id", id)
     .returns<(GroupMembership & { group: NonNullable<GroupMembership["group"]> })[]>();
-
-  // Fetch player rating
-  const { data: rating } = await supabase
-    .from("player_ratings")
-    .select("*")
-    .eq("player_id", id)
-    .single<PlayerRating>();
 
   // Fetch recent game results (last 10) where player participated
   const { data: recentGames } = await supabase
@@ -66,21 +59,6 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
 
   // Compute stats
   const totalSessions = memberships?.reduce((sum, m) => sum + m.total_sessions, 0) ?? 0;
-
-  let overallWins = 0;
-  let overallLosses = 0;
-  if (recentGames) {
-    for (const game of recentGames) {
-      const onTeamA = game.team_a_p1 === id || game.team_a_p2 === id;
-      if (onTeamA) {
-        if (game.score_a > game.score_b) overallWins++;
-        else overallLosses++;
-      } else {
-        if (game.score_b > game.score_a) overallWins++;
-        else overallLosses++;
-      }
-    }
-  }
 
   // Merge recent activity into a single feed sorted by date
   type ActivityItem =
@@ -163,29 +141,12 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="card">
           <p className="text-sm text-surface-muted">Total Sessions</p>
           <p className="mt-1 text-2xl font-bold text-dark-100">
             {totalSessions}
           </p>
-        </div>
-        <div className="card">
-          <p className="text-sm text-surface-muted">Overall Win %</p>
-          <p className="mt-1 text-2xl font-bold text-dark-100">
-            {formatWinPct(overallWins, overallLosses)}
-          </p>
-        </div>
-        <div className="card">
-          <p className="text-sm text-surface-muted">Rating</p>
-          <p className="mt-1 text-2xl font-bold text-dark-100">
-            {rating ? rating.display_rating : "Unrated"}
-          </p>
-          {rating && (
-            <p className="text-xs text-surface-muted">
-              {rating.games_played} games played
-            </p>
-          )}
         </div>
       </div>
 
