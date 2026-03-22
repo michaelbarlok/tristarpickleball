@@ -28,6 +28,7 @@ export async function sendPushNotification(
   const vapidSubject = process.env.VAPID_SUBJECT ?? "mailto:info@pkl-ball.app";
 
   if (!vapidPublicKey || !vapidPrivateKey) {
+    console.warn("VAPID keys not set, skipping push notification");
     return;
   }
 

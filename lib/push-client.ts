@@ -8,14 +8,16 @@
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 /**
- * Check if push notifications are supported in this browser.
+ * Check if push notifications are supported in this browser
+ * and VAPID keys are configured.
  */
 export function isPushSupported(): boolean {
   return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
-    "Notification" in window
+    "Notification" in window &&
+    !!VAPID_PUBLIC_KEY
   );
 }
 
