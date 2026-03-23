@@ -203,7 +203,7 @@ export default async function DashboardPage() {
                 )}
                 <div className="mt-2 flex gap-4 text-sm text-surface-muted">
                   <span>Step {m.current_step}</span>
-                  <span>{m.win_pct}% Win</span>
+                  <span>{m.win_pct}% Pt</span>
                   <span>{m.total_sessions} sessions</span>
                 </div>
               </Link>

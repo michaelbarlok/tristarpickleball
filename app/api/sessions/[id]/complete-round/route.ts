@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
  * Called when admin advances from round_active -> round_complete.
  * 1. Validates all courts have all scores submitted
  * 2. Computes pool_finish for each player from game results
- * 3. Updates win_pct in group_memberships (rolling window)
+ *    - Ties for 1st/last broken by overall ranking (step → point%) — no random
+ * 3. Updates win_pct (point percentage: points scored / points possible) in group_memberships (rolling window)
  * 4. Calls update_steps_on_round_complete RPC (sets step_after, target_court_next)
  * 5. Advances session status to round_complete
  */
@@ -80,6 +81,18 @@ export async function POST(
     }
   }
 
+  // Fetch group memberships for overall ranking tiebreaker (step → point%)
+  const allPlayerIds = participants.map((p) => p.player_id);
+  const { data: memberships } = await auth.supabase
+    .from("group_memberships")
+    .select("player_id, current_step, win_pct")
+    .eq("group_id", session.group_id)
+    .in("player_id", allPlayerIds);
+
+  const memberMap = new Map(
+    (memberships ?? []).map((m: any) => [m.player_id, { step: m.current_step, pointPct: m.win_pct }])
+  );
+
   // Compute pool_finish for each court
   for (const [courtNum, courtPlayers] of courtMap) {
     const courtScores = gameResults.filter((g) => g.pool_number === courtNum);
@@ -101,7 +114,6 @@ export async function POST(
         if (aWon) s.wins++;
         else s.losses++;
         s.pointDiff += game.score_a - game.score_b;
-        // Track h2h points against opponents
         for (const opp of teamBIds) {
           s.h2hPoints.set(opp, (s.h2hPoints.get(opp) ?? 0) + game.score_a);
         }
@@ -119,16 +131,20 @@ export async function POST(
       }
     }
 
-    // Sort: wins DESC -> point diff DESC -> h2h -> random
+    // Sort: wins DESC -> point diff DESC -> h2h -> overall ranking (step ASC, pointPct DESC)
     const ranked = Array.from(standings.entries())
-      .sort(([, a], [, b]) => {
+      .sort(([idA, a], [idB, b]) => {
         if (a.wins !== b.wins) return b.wins - a.wins;
         if (a.pointDiff !== b.pointDiff) return b.pointDiff - a.pointDiff;
-        // h2h tiebreaker between these two specific players
-        const aH2H = a.h2hPoints.get(Array.from(standings.entries()).find(([, v]) => v === b)?.[0] ?? "") ?? 0;
-        const bH2H = b.h2hPoints.get(Array.from(standings.entries()).find(([, v]) => v === a)?.[0] ?? "") ?? 0;
+        // h2h tiebreaker
+        const aH2H = a.h2hPoints.get(idB) ?? 0;
+        const bH2H = b.h2hPoints.get(idA) ?? 0;
         if (aH2H !== bH2H) return bH2H - aH2H;
-        return Math.random() - 0.5;
+        // Overall ranking tiebreaker: step ASC then pointPct DESC (no random)
+        const mA = memberMap.get(idA) ?? { step: 99, pointPct: 0 };
+        const mB = memberMap.get(idB) ?? { step: 99, pointPct: 0 };
+        if (mA.step !== mB.step) return mA.step - mB.step;
+        return mB.pointPct - mA.pointPct;
       });
 
     // Update pool_finish for each player
@@ -144,7 +160,7 @@ export async function POST(
     }
   }
 
-  // Update win_pct for all players based on rolling window
+  // Update win_pct (point percentage: points scored / points possible) for all players based on rolling window
   const { data: prefs } = await auth.supabase
     .from("group_preferences")
     .select("pct_window_sessions")
@@ -154,8 +170,7 @@ export async function POST(
   const windowSize = prefs?.pct_window_sessions ?? 6;
 
   for (const p of participants) {
-    // Get all game results for this player within the rolling window of recent sessions
-    // First, find the most recent N sessions for this group that this player participated in
+    // Find the most recent N sessions for this group that this player participated in
     const { data: recentSessions } = await auth.supabase
       .from("session_participants")
       .select("session_id")
@@ -177,25 +192,25 @@ export async function POST(
       .select("*")
       .in("session_id", sessionIds);
 
-    let wins = 0;
-    let losses = 0;
+    let pointsScored = 0;
+    let pointsPossible = 0;
 
     for (const game of playerGames ?? []) {
       const isTeamA = game.team_a_p1 === p.player_id || game.team_a_p2 === p.player_id;
       const isTeamB = game.team_b_p1 === p.player_id || game.team_b_p2 === p.player_id;
       if (!isTeamA && !isTeamB) continue;
 
-      const aWon = game.score_a > game.score_b;
-      if ((isTeamA && aWon) || (isTeamB && !aWon)) wins++;
-      else losses++;
+      // Points possible per game = the higher score (accounts for win-by-2 going above game limit)
+      const maxScore = Math.max(game.score_a, game.score_b);
+      pointsPossible += maxScore;
+      pointsScored += isTeamA ? game.score_a : game.score_b;
     }
 
-    const total = wins + losses;
-    const winPct = total > 0 ? Math.round((wins / total) * 10000) / 100 : 0;
+    const pointPct = pointsPossible > 0 ? Math.round((pointsScored / pointsPossible) * 10000) / 100 : 0;
 
     await auth.supabase
       .from("group_memberships")
-      .update({ win_pct: winPct })
+      .update({ win_pct: pointPct })
       .eq("group_id", session.group_id)
       .eq("player_id", p.player_id);
   }

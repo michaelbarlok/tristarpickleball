@@ -59,7 +59,7 @@ export default async function LadderPage({
         <p className="mt-1 text-surface-muted">
           {isFreePlay
             ? "Standings sorted by wins, then point differential."
-            : "Rankings sorted by Step, Win %, Last Played, and Sessions."}
+            : "Rankings sorted by Step, then Pt %."}
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export default async function LadderPage({
                   Step
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                  Win %
+                  Pt %
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
                   Sessions

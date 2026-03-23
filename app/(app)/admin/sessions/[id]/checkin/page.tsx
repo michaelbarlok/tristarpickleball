@@ -156,7 +156,7 @@ export default function CheckInPage() {
       const isSessionContinuation = session.is_same_day_continuation && session.prev_session_id;
 
       if (isSessionContinuation) {
-        // Session 2+ first seed: sort by previous court (target_court_next), win% tiebreaker
+        // Session 2+ first seed: sort by previous court (target_court_next), pt% tiebreaker
         positions = seedByCourtOrder(
           checkedIn.map((p) => ({
             id: p.player_id,
@@ -166,7 +166,7 @@ export default function CheckInPage() {
           session.num_courts
         );
       } else {
-        // Standard ranking sheet sort: Step ASC → Win% DESC → Last Played → Sessions
+        // Standard ranking sheet sort: Step ASC → Pt% DESC → Last Played → Sessions
         const rankedPlayers: RankedPlayer[] = checkedIn.map((p) => ({
           id: p.player_id,
           currentStep: p.current_step,
@@ -290,7 +290,7 @@ export default function CheckInPage() {
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted w-12">Check-in</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Name</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Step</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Win %</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted">Pt %</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-surface-muted w-24">Court</th>
             </tr>
           </thead>

@@ -496,7 +496,7 @@ export default function AdminGroupDetailPage() {
                         className="w-16 rounded border border-surface-border bg-surface-raised text-dark-100 px-2 py-1 text-center text-sm font-semibold focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                       />
                     </label>
-                    <span className="text-sm font-semibold text-brand-400">{member.win_pct}% Win</span>
+                    <span className="text-sm font-semibold text-brand-400">{member.win_pct}% Pt</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
@@ -544,7 +544,7 @@ export default function AdminGroupDetailPage() {
                         Step
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                        Win %
+                        Pt %
                       </th>
                     </>
                   )}
@@ -668,7 +668,7 @@ export default function AdminGroupDetailPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-dark-200">
-                Win % Window (sessions)
+                Pt % Window (sessions)
               </label>
               <input
                 type="number"
@@ -678,7 +678,7 @@ export default function AdminGroupDetailPage() {
                 className="input mt-1 w-full"
               />
               <p className="mt-1 text-xs text-surface-muted">
-                Number of recent sessions used to calculate win percentage.
+                Number of recent sessions used to calculate point percentage.
               </p>
             </div>
 

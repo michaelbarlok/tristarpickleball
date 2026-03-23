@@ -35,7 +35,7 @@ export interface CourtDistribution {
 export interface RankedPlayer {
   id: string;
   currentStep: number;
-  winPct: number;
+  winPct: number; // point percentage (points scored / points possible)
   lastPlayedAt: string | null;
   totalSessions: number;
 }
@@ -102,13 +102,13 @@ export function distributeCourts(
 
 /**
  * Sort players by ranking sheet order for session 1 of the day.
- * Step ASC → Win% DESC → Last Played DESC → Total Sessions DESC
+ * Step ASC → Pt% DESC → Last Played DESC → Total Sessions DESC
  */
 export function rankingSheetSort(players: RankedPlayer[]): RankedPlayer[] {
   return [...players].sort((a, b) => {
     // Step ASC (lower = better)
     if (a.currentStep !== b.currentStep) return a.currentStep - b.currentStep;
-    // Win% DESC (higher = better)
+    // Pt% DESC (higher = better)
     if (a.winPct !== b.winPct) return b.winPct - a.winPct;
     // Last Played DESC (more recent = better)
     const aTime = a.lastPlayedAt ? new Date(a.lastPlayedAt).getTime() : 0;
@@ -152,7 +152,7 @@ export function seedSession1(
 
 /**
  * Seed players to courts using a court number as the primary sort key,
- * with win% as the tiebreaker within the same court.
+ * with point% as the tiebreaker within the same court.
  *
  * Used for:
  * - Re-seeding after manual court changes (courtNumber = current court)
@@ -164,7 +164,7 @@ export function seedByCourtOrder(
 ): PlayerPosition[] {
   const sorted = [...players].sort((a, b) => {
     if (a.courtNumber !== b.courtNumber) return a.courtNumber - b.courtNumber;
-    return b.winPct - a.winPct; // higher win% = better within same court
+    return b.winPct - a.winPct; // higher point% = better within same court
   });
 
   const courts = distributeCourts(sorted.length, numCourts);
@@ -361,9 +361,16 @@ export function computeNewStep(
  * 1. Most wins
  * 2. Highest total point differential
  * 3. Most head-to-head points against tied opponent
- * 4. Random
+ * 4. Overall ranking: lower step_before (better rank) wins the tie
+ *
+ * NOTE: The authoritative pool_finish is computed in the complete-round API
+ * which has access to full group_memberships for the overall ranking tiebreaker.
+ * This function is used for display/preview purposes.
  */
-export function rankPoolResults(results: PoolResult[]): PoolResult[] {
+export function rankPoolResults(
+  results: PoolResult[],
+  overallRanking?: Map<string, { step: number; pointPct: number }>
+): PoolResult[] {
   const sorted = [...results].sort((a, b) => {
     // 1. Most wins
     if (a.wins !== b.wins) return b.wins - a.wins;
@@ -373,8 +380,14 @@ export function rankPoolResults(results: PoolResult[]): PoolResult[] {
     const aH2H = a.h2hPoints.get(b.playerId) ?? 0;
     const bH2H = b.h2hPoints.get(a.playerId) ?? 0;
     if (aH2H !== bH2H) return bH2H - aH2H;
-    // 4. Random
-    return Math.random() - 0.5;
+    // 4. Overall ranking tiebreaker: step ASC, then pointPct DESC
+    if (overallRanking) {
+      const rA = overallRanking.get(a.playerId) ?? { step: 99, pointPct: 0 };
+      const rB = overallRanking.get(b.playerId) ?? { step: 99, pointPct: 0 };
+      if (rA.step !== rB.step) return rA.step - rB.step;
+      if (rA.pointPct !== rB.pointPct) return rB.pointPct - rA.pointPct;
+    }
+    return 0;
   });
 
   return sorted.map((r, i) => ({ ...r, poolFinish: i + 1 }));
@@ -553,10 +566,10 @@ export function updatePairings(
 }
 
 /**
- * Calculate win percentage safely.
+ * Calculate point percentage: points scored / points possible.
+ * Points possible per game = the higher score (accounts for win-by-2).
  */
-export function winPercentage(wins: number, losses: number): number {
-  const total = wins + losses;
-  if (total === 0) return 0;
-  return Math.round((wins / total) * 100) / 100;
+export function pointPercentage(pointsScored: number, pointsPossible: number): number {
+  if (pointsPossible === 0) return 0;
+  return Math.round((pointsScored / pointsPossible) * 10000) / 100;
 }

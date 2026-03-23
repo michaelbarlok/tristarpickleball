@@ -118,7 +118,7 @@ export function CollapsibleMembers({
                           Step
                         </th>
                         <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-surface-muted">
-                          Win %
+                          Pt %
                         </th>
                       </>
                     )}

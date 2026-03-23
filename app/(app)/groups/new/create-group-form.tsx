@@ -146,7 +146,7 @@ export function CreateGroupForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="pct_window_sessions" className="block text-sm font-medium text-dark-200 mb-1">
-                Win % Window (sessions)
+                Pt % Window (sessions)
               </label>
               <input
                 type="number"
@@ -157,7 +157,7 @@ export function CreateGroupForm({
                 className="input w-full"
               />
               <p className="mt-1 text-xs text-surface-muted">
-                Recent sessions used to calculate win percentage.
+                Recent sessions used to calculate point percentage.
               </p>
             </div>
 
