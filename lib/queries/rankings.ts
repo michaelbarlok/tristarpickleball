@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Recalculate win % for a player in a group using the rolling window.
+ * Recalculate point percentage for a player in a group using the rolling window.
+ * Point percentage = points scored / points possible across the last N sessions.
+ * Points possible per game = the higher score (accounts for win-by-2).
  * Only counts the last N sessions per group_preferences.pct_window_sessions.
  */
 export async function recalculateWinPct(
@@ -44,37 +46,36 @@ export async function recalculateWinPct(
 
   if (!games || games.length === 0) return 0;
 
-  let totalWins = 0;
-  let totalGames = 0;
+  let pointsScored = 0;
+  let pointsPossible = 0;
 
   for (const game of games) {
     const onTeamA =
       game.team_a_p1 === playerId || game.team_a_p2 === playerId;
-    const won = onTeamA
-      ? game.score_a > game.score_b
-      : game.score_b > game.score_a;
 
-    if (won) totalWins++;
-    totalGames++;
+    // Points possible per game = the higher score (accounts for win-by-2)
+    const maxScore = Math.max(game.score_a, game.score_b);
+    pointsPossible += maxScore;
+    pointsScored += onTeamA ? game.score_a : game.score_b;
   }
 
-  const winPct =
-    totalGames > 0
-      ? Math.round((totalWins / totalGames) * 10000) / 100
+  const pointPct =
+    pointsPossible > 0
+      ? Math.round((pointsScored / pointsPossible) * 10000) / 100
       : 0;
 
   // Update group_memberships
   await supabase
     .from("group_memberships")
-    .update({ win_pct: winPct })
+    .update({ win_pct: pointPct })
     .eq("group_id", groupId)
     .eq("player_id", playerId);
 
-  return winPct;
+  return pointPct;
 }
 
 /**
- * Recalculate win % for ALL players in a group.
+ * Recalculate point percentage for ALL players in a group.
  * Called after a session completes.
  */
 export async function recalculateAllWinPcts(groupId: string): Promise<void> {

@@ -50,7 +50,7 @@ export async function getGroupBySlug(
 
 /**
  * Fetch all members of a group with their profiles,
- * sorted by ranking sheet order (Step ASC -> Win% DESC -> Last Played DESC -> Sessions DESC).
+ * sorted by ranking sheet order (Step ASC -> Pt% DESC -> Last Played DESC -> Sessions DESC).
  */
 export async function getGroupMembers(
   groupId: string

@@ -299,7 +299,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Win %</span>
+                        <span>Pt %</span>
                         <span className="font-medium text-dark-100">
                           {m.win_pct}%
                         </span>
