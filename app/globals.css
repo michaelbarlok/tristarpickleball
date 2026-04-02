@@ -178,6 +178,11 @@
   100% { background-position: -200% 0; }
 }
 
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;
@@ -203,6 +208,10 @@
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .animate-slide-up {
