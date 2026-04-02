@@ -114,7 +114,7 @@
   .card-accent-yellow { @apply border-l-[3px] border-l-accent-500/60; }
   .card-accent-red    { @apply border-l-[3px] border-l-red-500/60; }
   .card-accent-brand  { @apply border-l-[3px] border-l-brand-400/70; }
-  .card-accent-gray   { @apply border-l-[3px] border-l-dark-400/30; }
+  .card-accent-gray   { @apply border-l-[3px] border-l-surface-border; }
 
   /* ── Badges ── */
   .badge {
