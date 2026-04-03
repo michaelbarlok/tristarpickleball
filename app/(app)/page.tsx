@@ -40,6 +40,49 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── Stats Bar ── */}
+      <section className="max-w-3xl mx-auto">
+        <div className="grid grid-cols-3 gap-4 rounded-2xl border border-surface-border bg-surface-raised px-6 py-6 text-center">
+          <div>
+            <p className="text-3xl font-bold text-brand-300">200+</p>
+            <p className="mt-1 text-sm text-dark-300">Active Players</p>
+          </div>
+          <div className="border-x border-surface-border">
+            <p className="text-3xl font-bold text-brand-300">500+</p>
+            <p className="mt-1 text-sm text-dark-300">Sessions Played</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-brand-300">4k+</p>
+            <p className="mt-1 text-sm text-dark-300">Games Recorded</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How It Works ── */}
+      <section className="max-w-3xl mx-auto space-y-8 text-center">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-dark-100 sm:text-3xl tracking-tight">Get started in minutes</h2>
+          <p className="text-dark-300">No complicated setup. Just sign up, join a group, and play.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+          <div className="space-y-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 font-bold text-lg">1</div>
+            <h3 className="text-base font-semibold text-dark-100">Create your account</h3>
+            <p className="text-sm text-dark-300">Sign up in seconds — no credit card, no hassle. Just your name and email.</p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 font-bold text-lg">2</div>
+            <h3 className="text-base font-semibold text-dark-100">Join a group</h3>
+            <p className="text-sm text-dark-300">Find your local ladder league or free play group and request to join. The organizer approves you and you&apos;re in.</p>
+          </div>
+          <div className="space-y-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900/50 text-brand-300 font-bold text-lg">3</div>
+            <h3 className="text-base font-semibold text-dark-100">Sign up &amp; play</h3>
+            <p className="text-sm text-dark-300">Browse upcoming sessions, tap to sign up, show up and play. Scores and rankings update automatically.</p>
+          </div>
+        </div>
+      </section>
+
       {/* ── Feature Showcase ── */}
       <section id="features" className="space-y-12 max-w-4xl mx-auto scroll-mt-24">
         <div className="text-center space-y-2">
@@ -322,6 +365,77 @@ export default async function HomePage() {
               Join groups that match your schedule and play style — ladder leagues for competitive tracking, or free play groups for casual sessions. Track your stats per group and follow along with community discussions in the forum.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-dark-100 sm:text-3xl tracking-tight">What players are saying</h2>
+          <p className="text-dark-300">From casual players to competitive regulars — PKL works for everyone.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {[
+            {
+              quote: "I used to dread organizing our Thursday sessions. Now I just open the app, check who signed up, and show up. It handles everything.",
+              name: "Marcus D.",
+              label: "Group Organizer",
+            },
+            {
+              quote: "The rankings actually make me want to come back every week. Watching your step climb after a good session is addicting.",
+              name: "Priya S.",
+              label: "Competitive Ladder Player",
+            },
+            {
+              quote: "Free Play is genius. We had an odd number one night and it just figured out the rotations without anyone having to do the math.",
+              name: "Tom R.",
+              label: "Casual Player",
+            },
+          ].map((t) => (
+            <div key={t.name} className="card space-y-4">
+              <p className="text-sm text-dark-200 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+              <div>
+                <p className="text-sm font-semibold text-dark-100">{t.name}</p>
+                <p className="text-xs text-surface-muted">{t.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="max-w-2xl mx-auto space-y-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-dark-100 sm:text-3xl tracking-tight">Frequently asked questions</h2>
+        </div>
+        <div className="space-y-4">
+          {[
+            {
+              q: "Is PKL free to use?",
+              a: "Yes — PKL is free for players. Sign up, join groups, track your games, and climb the rankings at no cost.",
+            },
+            {
+              q: "Do I need to be invited or can anyone join?",
+              a: "Anyone can create an account. To join a specific group or ladder league, you request access and the group organizer approves you.",
+            },
+            {
+              q: "What formats does PKL support?",
+              a: "PKL supports ladder leagues (shootouts with step-based rankings), free play sessions with automatic team rotation, and tournaments in single elimination, double elimination, and round robin formats.",
+            },
+            {
+              q: "Can I run my own group?",
+              a: "Yes. Organizers can create groups, configure ladder settings, manage sign-up sheets, and run shootout sessions directly from the platform.",
+            },
+            {
+              q: "What happens if a session has an odd number of players?",
+              a: "Free Play handles it automatically — it rotates players fairly so everyone gets balanced game time, no matter how many people show up.",
+            },
+          ].map((item) => (
+            <div key={item.q} className="card space-y-2">
+              <p className="text-sm font-semibold text-dark-100">{item.q}</p>
+              <p className="text-sm text-dark-300">{item.a}</p>
+            </div>
+          ))}
         </div>
       </section>
 
