@@ -454,18 +454,18 @@ function ActivePhase({
                   inputMode="numeric"
                   value={scores[i]?.scoreA ?? ""}
                   onChange={(e) => setScore(i, "scoreA", e.target.value)}
-                  className="input w-14 text-center text-lg font-bold"
-                  placeholder="-"
+                  className="input w-20 py-3 text-center text-2xl font-bold"
+                  placeholder="—"
                 />
-                <span className="text-surface-muted font-bold">:</span>
+                <span className="text-surface-muted font-bold text-lg">:</span>
                 <input
                   type="number"
                   min={0}
                   inputMode="numeric"
                   value={scores[i]?.scoreB ?? ""}
                   onChange={(e) => setScore(i, "scoreB", e.target.value)}
-                  className="input w-14 text-center text-lg font-bold"
-                  placeholder="-"
+                  className="input w-20 py-3 text-center text-2xl font-bold"
+                  placeholder="—"
                 />
               </div>
 

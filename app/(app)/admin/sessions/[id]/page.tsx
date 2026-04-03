@@ -782,32 +782,32 @@ export default function AdminSessionDetailPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-2">
                             <input
                               type="number"
                               min={0}
                               value={editScoreA}
                               onChange={(e) => setEditScoreA(e.target.value)}
-                              className="input w-14 py-1 text-center text-sm"
+                              className="input w-20 py-2 text-center text-xl font-bold"
                             />
-                            <span className="text-surface-muted">–</span>
+                            <span className="text-surface-muted font-bold">–</span>
                             <input
                               type="number"
                               min={0}
                               value={editScoreB}
                               onChange={(e) => setEditScoreB(e.target.value)}
-                              className="input w-14 py-1 text-center text-sm"
+                              className="input w-20 py-2 text-center text-xl font-bold"
                             />
                             <button
                               onClick={() => saveEditedScore(match.result!.id)}
                               disabled={savingScore}
-                              className="text-xs text-teal-300 hover:text-teal-200 font-medium ml-1"
+                              className="btn-primary text-sm px-3 py-2"
                             >
-                              Save
+                              {savingScore ? "…" : "Save"}
                             </button>
                             <button
                               onClick={() => setEditingScore(null)}
-                              className="text-xs text-surface-muted hover:text-dark-200 ml-1"
+                              className="btn-secondary text-sm px-3 py-2"
                             >
                               Cancel
                             </button>
@@ -847,38 +847,44 @@ export default function AdminSessionDetailPage() {
                         {match.team2.map((pid) => playerNameMap.get(pid) ?? "?").join(" & ")}
                       </div>
                       {enteringGame === matchKey && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <input
-                            type="number"
-                            min={0}
-                            value={newScoreA}
-                            onChange={(e) => setNewScoreA(e.target.value)}
-                            className="input w-14 py-1 text-center text-sm"
-                            placeholder="0"
-                            autoFocus
-                          />
-                          <span className="text-surface-muted">–</span>
-                          <input
-                            type="number"
-                            min={0}
-                            value={newScoreB}
-                            onChange={(e) => setNewScoreB(e.target.value)}
-                            className="input w-14 py-1 text-center text-sm"
-                            placeholder="0"
-                          />
-                          <button
-                            onClick={() => submitNewScore(match)}
-                            disabled={submittingNewScore}
-                            className="text-xs text-teal-300 hover:text-teal-200 font-medium ml-1"
-                          >
-                            {submittingNewScore ? "..." : "Submit"}
-                          </button>
-                          <button
-                            onClick={() => setEnteringGame(null)}
-                            className="text-xs text-surface-muted hover:text-dark-200 ml-1"
-                          >
-                            Cancel
-                          </button>
+                        <div className="mt-3 space-y-3">
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                            <input
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={newScoreA}
+                              onChange={(e) => setNewScoreA(e.target.value)}
+                              className="input py-3 text-center text-2xl font-bold w-full"
+                              placeholder="0"
+                              autoFocus
+                            />
+                            <span className="text-surface-muted font-bold text-lg">–</span>
+                            <input
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={newScoreB}
+                              onChange={(e) => setNewScoreB(e.target.value)}
+                              className="input py-3 text-center text-2xl font-bold w-full"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => submitNewScore(match)}
+                              disabled={submittingNewScore}
+                              className="btn-primary flex-1"
+                            >
+                              {submittingNewScore ? "Submitting…" : "Submit Score"}
+                            </button>
+                            <button
+                              onClick={() => setEnteringGame(null)}
+                              className="btn-secondary"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                           <FormError message={newScoreError} />
                         </div>
                       )}
