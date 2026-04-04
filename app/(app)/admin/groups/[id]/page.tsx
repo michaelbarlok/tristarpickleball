@@ -4,7 +4,7 @@ import { useConfirm } from "@/components/confirm-modal";
 import { EmptyState } from "@/components/empty-state";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { cn, formatDate } from "@/lib/utils";
 import type {
   ShootoutGroup,
@@ -32,12 +32,14 @@ export default function AdminGroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { supabase } = useSupabase();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [group, setGroup] = useState<ShootoutGroup | null>(null);
   const [preferences, setPreferences] = useState<GroupPreferences | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [allPlayers, setAllPlayers] = useState<Profile[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>("members");
+  const initialTab = (searchParams.get("tab") === "preferences" ? "preferences" : "members") as Tab;
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [loading, setLoading] = useState(true);
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);

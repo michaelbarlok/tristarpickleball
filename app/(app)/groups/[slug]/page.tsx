@@ -191,6 +191,11 @@ export default async function GroupPage({
               Forum
             </Link>
           )}
+          {isGroupAdmin && (
+            <Link href={`/admin/groups/${group.id}?tab=preferences`} className="btn-secondary">
+              Group Settings
+            </Link>
+          )}
           {isMember && !isGroupAdmin && (
             <ContactOrganizersButton
               endpoint={`/api/groups/${group.id}/contact-admins`}
