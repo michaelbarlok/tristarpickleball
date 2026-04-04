@@ -40,24 +40,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Stats Bar ── */}
-      <section className="max-w-3xl mx-auto">
-        <div className="grid grid-cols-3 gap-4 rounded-2xl border border-surface-border bg-surface-raised px-6 py-6 text-center">
-          <div>
-            <p className="text-3xl font-bold text-brand-300">200+</p>
-            <p className="mt-1 text-sm text-dark-300">Active Players</p>
-          </div>
-          <div className="border-x border-surface-border">
-            <p className="text-3xl font-bold text-brand-300">500+</p>
-            <p className="mt-1 text-sm text-dark-300">Sessions Played</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-brand-300">4k+</p>
-            <p className="mt-1 text-sm text-dark-300">Games Recorded</p>
-          </div>
-        </div>
-      </section>
-
       {/* ── How It Works ── */}
       <section className="max-w-3xl mx-auto space-y-8 text-center">
         <div className="space-y-2">
