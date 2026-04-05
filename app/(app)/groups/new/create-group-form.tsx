@@ -7,13 +7,34 @@ import { US_STATES } from "@/lib/us-states";
 export function CreateGroupForm({
   createAction,
 }: {
-  createAction: (formData: FormData) => Promise<void>;
+  createAction: (formData: FormData) => Promise<{ error: string } | void>;
 }) {
   const [groupType, setGroupType] = useState("ladder_league");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   return (
-    <form action={async (formData) => { setLoading(true); try { await createAction(formData); } finally { setLoading(false); } }} className="card space-y-4">
+    <form
+      action={async (formData) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const result = await createAction(formData);
+          if (result?.error) setError(result.error);
+        } catch (e) {
+          setError("Something went wrong. Please try again.");
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      }}
+      className="card space-y-4"
+    >
+      {error && (
+        <div className="rounded-md bg-red-900/30 border border-red-700/50 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
       {/* Name */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-dark-200 mb-1">

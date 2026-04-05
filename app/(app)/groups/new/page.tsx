@@ -5,11 +5,11 @@ import Link from "next/link";
 import { CreateGroupForm } from "./create-group-form";
 
 export default function CreateGroupPage() {
-  async function createGroup(formData: FormData) {
+  async function createGroup(formData: FormData): Promise<{ error: string } | void> {
     "use server";
 
     const name = (formData.get("name") as string)?.trim();
-    if (!name) return;
+    if (!name) return { error: "Group name is required." };
 
     const description = (formData.get("description") as string)?.trim() || null;
     const city = (formData.get("city") as string)?.trim() || null;
@@ -17,24 +17,37 @@ export default function CreateGroupPage() {
     const groupType = (formData.get("group_type") as string) || "ladder_league";
     const visibility = (formData.get("visibility") as string) || "public";
 
-    const slug = name
+    const baseSlug = name
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
+      .replace(/-+/g, "-")
+      .slice(0, 50);
 
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return { error: "You must be logged in to create a group." };
 
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
       .eq("user_id", user.id)
       .single();
-    if (!profile) return;
+    if (!profile) return { error: "Profile not found. Please complete your profile setup first." };
+
+    // Try the base slug; if it conflicts, append a short random suffix
+    const serviceClient = await createServiceClient();
+    let slug = baseSlug;
+    const { data: existing } = await serviceClient
+      .from("shootout_groups")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (existing) {
+      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
 
     const { data: newGroup, error } = await supabase
       .from("shootout_groups")
@@ -52,11 +65,14 @@ export default function CreateGroupPage() {
       .select("id, slug")
       .single();
 
-    if (error || !newGroup) return;
+    if (error || !newGroup) {
+      console.error("Create group error:", error);
+      return { error: error?.message ?? "Failed to create group. Please try again." };
+    }
 
     // Create preferences for ladder league groups using form values
     if (groupType === "ladder_league") {
-      await supabase.from("group_preferences").insert({
+      const { error: prefsError } = await supabase.from("group_preferences").insert({
         group_id: newGroup.id,
         pct_window_sessions: Number(formData.get("pct_window_sessions")) || 10,
         new_player_start_step: Number(formData.get("new_player_start_step")) || 5,
@@ -68,10 +84,10 @@ export default function CreateGroupPage() {
         game_limit_5p: Number(formData.get("game_limit_5p")) || 4,
         win_by_2: formData.get("win_by_2") === "on",
       });
+      if (prefsError) console.error("Create group preferences error:", prefsError);
     }
 
     // Add creator as group admin (use service client to bypass RLS)
-    const serviceClient = await createServiceClient();
     const startStep = Number(formData.get("new_player_start_step")) || 5;
     await serviceClient.from("group_memberships").upsert(
       {
