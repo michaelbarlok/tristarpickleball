@@ -65,7 +65,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Misconfigured" }, { status: 500 });
   }
 
-  const { from, to, subject, html, text } = event.data;
+  // Log the full payload so we can see exactly what Resend sends
+  const raw = event.data as Record<string, unknown>;
+  console.log("email.received payload keys:", Object.keys(raw));
+  console.log("email.received data:", JSON.stringify(raw, null, 2));
+
+  const { from, to, subject } = event.data;
+  // Try all possible field names Resend might use for the body
+  const html = (raw.html ?? raw.html_body ?? raw.htmlBody) as string | undefined;
+  const text = (raw.text ?? raw.text_body ?? raw.textBody ?? raw.plain_text) as string | undefined;
   const recipient = to[0] ?? "info@tristarpickleball.com";
 
   try {
