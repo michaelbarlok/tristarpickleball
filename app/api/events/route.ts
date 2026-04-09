@@ -13,8 +13,6 @@ interface EmailReceivedEvent {
     bcc: string[];
     subject: string;
     message_id: string;
-    html?: string;
-    text?: string;
     attachments: {
       id: string;
       filename: string;
@@ -65,24 +63,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Misconfigured" }, { status: 500 });
   }
 
-  const { from, to, subject, html, text } = event.data;
+  const { Resend } = await import("resend");
+  const resend = new Resend(apiKey);
+
+  const { from, to, subject, email_id } = event.data;
   const recipient = to[0] ?? "info@tristarpickleball.com";
 
+  // The webhook payload omits the body — fetch the full email content via API
+  let html: string | undefined;
+  let text: string | undefined;
   try {
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const fetched = await resend.emails.get(email_id);
+    if (fetched.data) {
+      const d = fetched.data as Record<string, unknown>;
+      html = d.html as string | undefined;
+      text = d.text as string | undefined;
+    }
+  } catch (err) {
+    console.warn("Could not fetch email body by ID:", err);
+  }
 
-    const bodyText = text
-      ? `--- Forwarded from ${from} to ${recipient} ---\n\n${text}`
-      : `--- Forwarded from ${from} to ${recipient} ---`;
+  const bodyText = text
+    ? `--- Forwarded from ${from} to ${recipient} ---\n\n${text}`
+    : `--- Forwarded from ${from} to ${recipient} ---`;
 
+  try {
     await resend.emails.send(
       html
         ? {
             from: `Tri-Star Pickleball <info@tristarpickleball.com>`,
             to: forwardTo,
             replyTo: from,
-            subject: `[${recipient}] ${subject}`,
+            subject: `Fwd: ${subject}`,
             html,
             text: bodyText,
           }
@@ -90,7 +102,7 @@ export async function POST(request: NextRequest) {
             from: `Tri-Star Pickleball <info@tristarpickleball.com>`,
             to: forwardTo,
             replyTo: from,
-            subject: `[${recipient}] ${subject}`,
+            subject: `Fwd: ${subject}`,
             text: bodyText,
           }
     );
