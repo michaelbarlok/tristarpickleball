@@ -68,19 +68,23 @@ export async function POST(request: NextRequest) {
 
   const { from, to, subject, email_id } = event.data;
   const recipient = to[0] ?? "info@tristarpickleball.com";
-
-  // The webhook payload omits the body — fetch the full email content via API
   let html: string | undefined;
   let text: string | undefined;
+
+  // Fetch the full email content from Resend REST API using the email_id
   try {
-    const fetched = await resend.emails.get(email_id);
-    if (fetched.data) {
-      const d = fetched.data as unknown as Record<string, unknown>;
-      html = d.html as string | undefined;
-      text = d.text as string | undefined;
+    const res = await fetch(`https://api.resend.com/emails/${email_id}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (res.ok) {
+      const json = await res.json() as { html?: string; text?: string };
+      html = json.html ?? undefined;
+      text = json.text ?? undefined;
+    } else {
+      console.warn("Resend email fetch failed:", res.status);
     }
   } catch (err) {
-    console.warn("Could not fetch email body by ID:", err);
+    console.warn("Could not fetch email body:", err);
   }
 
   const bodyText = text
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
             from: `Tri-Star Pickleball <info@tristarpickleball.com>`,
             to: forwardTo,
             replyTo: from,
-            subject: `Fwd: ${subject}`,
+            subject: `[INFO-TSP] ${subject}`,
             html,
             text: bodyText,
           }
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
             from: `Tri-Star Pickleball <info@tristarpickleball.com>`,
             to: forwardTo,
             replyTo: from,
-            subject: `Fwd: ${subject}`,
+            subject: `[INFO-TSP] ${subject}`,
             text: bodyText,
           }
     );
