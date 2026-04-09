@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     await resend.emails.send({
       from: `Tri-Star Pickleball <info@tristarpickleball.com>`,
       to: forwardTo,
-      reply_to: from,
+      replyTo: from,
       subject: `[${recipient}] ${subject}`,
       html: html ?? undefined,
       text: text
