@@ -68,19 +68,36 @@ export async function POST(request: NextRequest) {
 
   const { from, to, subject, email_id } = event.data;
   const recipient = to[0] ?? "info@tristarpickleball.com";
-
-  // The webhook payload omits the body — fetch the full email content via API
   let html: string | undefined;
   let text: string | undefined;
+
+  // Attempt 1: SDK get (works for sent emails, may work for received)
   try {
     const fetched = await resend.emails.get(email_id);
     if (fetched.data) {
-      const d = fetched.data as unknown as Record<string, unknown>;
-      html = d.html as string | undefined;
-      text = d.text as string | undefined;
+      html = fetched.data.html ?? undefined;
+      text = fetched.data.text ?? undefined;
+      console.log("emails.get html length:", html?.length, "text length:", text?.length);
+    } else {
+      console.warn("emails.get returned no data:", JSON.stringify(fetched.error));
     }
   } catch (err) {
-    console.warn("Could not fetch email body by ID:", err);
+    console.warn("emails.get threw:", err);
+  }
+
+  // Attempt 2: direct REST call to possible received-email endpoint
+  if (!html && !text) {
+    try {
+      const res = await fetch(`https://api.resend.com/emails/${email_id}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const json = await res.json() as Record<string, unknown>;
+      console.log("REST /emails/{id} status:", res.status, "keys:", Object.keys(json));
+      html = json.html as string | undefined;
+      text = json.text as string | undefined;
+    } catch (err) {
+      console.warn("REST fetch threw:", err);
+    }
   }
 
   const bodyText = text
