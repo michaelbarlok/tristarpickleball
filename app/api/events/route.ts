@@ -68,8 +68,32 @@ export async function POST(request: NextRequest) {
   const { Resend } = await import("resend");
   const resend = new Resend(apiKey);
 
-  const { from, to, subject, html, text } = event.data;
+  const { from, to, subject, html: webhookHtml, text: webhookText, email_id } = event.data;
   const recipient = to[0] ?? "info@tristarpickleball.com";
+
+  // webhook payload rarely includes html/text — fetch from API as primary source
+  let html: string | undefined = webhookHtml ?? undefined;
+  let text: string | undefined = webhookText ?? undefined;
+
+  if (!html && !text) {
+    try {
+      const res = await fetch(`https://api.resend.com/emails/${email_id}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const json = await res.json() as Record<string, unknown>;
+      console.log("Resend /emails fetch status:", res.status, "html:", typeof json.html, "text:", typeof json.text, "keys:", Object.keys(json));
+      if (res.ok) {
+        html = typeof json.html === "string" ? json.html : undefined;
+        text = typeof json.text === "string" ? json.text : undefined;
+      } else {
+        console.warn("Resend email fetch failed:", res.status, json);
+      }
+    } catch (err) {
+      console.warn("Could not fetch email body:", err);
+    }
+  }
+
+  console.log("Forwarding email — html:", !!html, "text:", !!text, "from:", from, "subject:", subject);
 
   const bodyText = text
     ? `--- Forwarded from ${from} to ${recipient} ---\n\n${text}`
