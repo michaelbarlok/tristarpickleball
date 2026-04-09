@@ -13,8 +13,6 @@ interface EmailReceivedEvent {
     bcc: string[];
     subject: string;
     message_id: string;
-    html?: string;
-    text?: string;
     attachments: {
       id: string;
       filename: string;
@@ -65,25 +63,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Misconfigured" }, { status: 500 });
   }
 
-  // Log the full payload so we can see exactly what Resend sends
-  const raw = event.data as Record<string, unknown>;
-  console.log("email.received payload keys:", Object.keys(raw));
-  console.log("email.received data:", JSON.stringify(raw, null, 2));
+  const { Resend } = await import("resend");
+  const resend = new Resend(apiKey);
 
-  const { from, to, subject } = event.data;
-  // Try all possible field names Resend might use for the body
-  const html = (raw.html ?? raw.html_body ?? raw.htmlBody) as string | undefined;
-  const text = (raw.text ?? raw.text_body ?? raw.textBody ?? raw.plain_text) as string | undefined;
+  const { from, to, subject, email_id } = event.data;
   const recipient = to[0] ?? "info@tristarpickleball.com";
 
+  // The webhook payload omits the body — fetch the full email content via API
+  let html: string | undefined;
+  let text: string | undefined;
   try {
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    const fetched = await resend.emails.get(email_id);
+    if (fetched.data) {
+      const d = fetched.data as Record<string, unknown>;
+      html = d.html as string | undefined;
+      text = d.text as string | undefined;
+    }
+  } catch (err) {
+    console.warn("Could not fetch email body by ID:", err);
+  }
 
-    const bodyText = text
-      ? `--- Forwarded from ${from} to ${recipient} ---\n\n${text}`
-      : `--- Forwarded from ${from} to ${recipient} ---`;
+  const bodyText = text
+    ? `--- Forwarded from ${from} to ${recipient} ---\n\n${text}`
+    : `--- Forwarded from ${from} to ${recipient} ---`;
 
+  try {
     await resend.emails.send(
       html
         ? {
