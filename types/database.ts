@@ -384,6 +384,7 @@ export interface TournamentRegistration {
   waitlist_position?: number | null;
   division?: string | null;
   seed?: number | null;
+  paid: boolean;
   registered_at: string;
   // Relations
   player?: Profile;
