@@ -12,6 +12,7 @@ import { getDivisionLabel } from "@/lib/divisions";
 import { DivisionBrackets } from "./division-brackets";
 import { ContactOrganizersButton } from "@/components/contact-organizers-button";
 import { formatDate, formatTime, formatDateTime } from "@/lib/utils";
+import { PaidToggle } from "@/components/paid-toggle";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -346,9 +347,16 @@ export default async function TournamentDetailPage({
 
       {/* Registrations List */}
       <div>
-        <h2 className="text-lg font-semibold text-dark-100 mb-3">
-          Registered ({confirmedRegistrations.length}{tournament.player_cap ? `/${tournament.player_cap}` : ""})
-        </h2>
+        <div className="flex items-baseline gap-3 mb-3">
+          <h2 className="text-lg font-semibold text-dark-100">
+            Registered ({confirmedRegistrations.length}{tournament.player_cap ? `/${tournament.player_cap}` : ""})
+          </h2>
+          {canManage && tournament.entry_fee && confirmedRegistrations.length > 0 && (
+            <span className="text-xs text-surface-muted">
+              {confirmedRegistrations.filter((r: any) => r.paid).length} of {confirmedRegistrations.length} paid
+            </span>
+          )}
+        </div>
         {confirmedRegistrations.length > 0 ? (
           <div className="card overflow-x-auto p-0">
             <table className="min-w-full divide-y divide-surface-border">
@@ -362,6 +370,9 @@ export default async function TournamentDetailPage({
                   <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium uppercase text-surface-muted">Division</th>
                   {canManage && (
                     <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">Seed</th>
+                  )}
+                  {canManage && tournament.entry_fee && (
+                    <th className="px-2 sm:px-4 py-2 text-center text-xs font-medium uppercase text-surface-muted">Paid</th>
                   )}
                 </tr>
               </thead>
@@ -387,6 +398,14 @@ export default async function TournamentDetailPage({
                     {canManage && (
                       <td className="px-2 sm:px-4 py-2 text-center text-sm text-surface-muted">
                         {reg.seed ?? "—"}
+                      </td>
+                    )}
+                    {canManage && tournament.entry_fee && (
+                      <td className="px-2 sm:px-4 py-2 text-center">
+                        <PaidToggle
+                          registrationId={reg.id}
+                          isPaid={(reg as any).paid ?? false}
+                        />
                       </td>
                     )}
                   </tr>
