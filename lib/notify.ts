@@ -160,6 +160,8 @@ const EMAIL_TEMPLATES: Record<string, () => Promise<{ default: (props: any) => R
   PoolAssigned: () => import("@/emails/PoolAssigned"),
   StepChanged: () => import("@/emails/StepChanged"),
   TournamentWaitlistPromoted: () => import("@/emails/TournamentWaitlistPromoted"),
+  TournamentRegistered: () => import("@/emails/TournamentRegistered"),
+  TournamentWithdrawal: () => import("@/emails/TournamentWithdrawal"),
   BadgeEarned: () => import("@/emails/BadgeEarned"),
 };
 

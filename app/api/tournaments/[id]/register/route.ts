@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/auth";
 import { checkAndAwardBadges } from "@/lib/badges";
 import { createServiceClient } from "@/lib/supabase/server";
 import { notify } from "@/lib/notify";
+import { getDivisionLabel } from "@/lib/divisions";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -129,6 +130,36 @@ export async function POST(
   // Check tournament badges (non-blocking)
   checkAndAwardBadges(auth.profile.id, ["tournament"]).catch(() => {});
 
+  // Send registration notification — non-blocking, test users are suppressed inside notify()
+  const notifTitle = status === "confirmed" ? "Registration Confirmed!" : "You're on the Waitlist";
+  const notifBody = status === "confirmed"
+    ? `Your registration for ${tournament.title} is confirmed.`
+    : `You've been added to the waitlist (#${waitlistPosition}) for ${tournament.title}.`;
+
+  // Fetch player + partner display names so each email shows who they're playing with
+  const profileIds = [auth.profile.id, ...(partner_id ? [partner_id] : [])];
+  const { data: nameRows } = await auth.supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", profileIds);
+  const nameMap = Object.fromEntries((nameRows ?? []).map((r) => [r.id, r.display_name]));
+  const playerName = nameMap[auth.profile.id];
+  const partnerName = partner_id ? nameMap[partner_id] : undefined;
+
+  const baseEmailData = {
+    tournamentTitle: tournament.title,
+    tournamentId,
+    status,
+    ...(waitlistPosition ? { waitlistPosition } : {}),
+    ...(division ? { divisionLabel: getDivisionLabel(division) } : {}),
+  };
+
+  notify({ profileId: auth.profile.id, type: "tournament_registration", title: notifTitle, body: notifBody, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentRegistered", emailData: { ...baseEmailData, ...(partnerName ? { partnerName } : {}) } }).catch(() => {});
+
+  if (partner_id) {
+    notify({ profileId: partner_id, type: "tournament_registration", title: notifTitle, body: notifBody, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentRegistered", emailData: { ...baseEmailData, ...(playerName ? { partnerName: playerName } : {}) } }).catch(() => {});
+  }
+
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath("/tournaments");
 
@@ -147,10 +178,10 @@ export async function DELETE(
   const auth = await requireAuth();
   if (auth instanceof NextResponse) return auth;
 
-  // Find registration (include division for waitlist promotion)
+  // Find registration (include player/partner ids for notifications)
   const { data: reg } = await auth.supabase
     .from("tournament_registrations")
-    .select("id, status, division")
+    .select("id, status, division, player_id, partner_id")
     .eq("tournament_id", tournamentId)
     .or(`player_id.eq.${auth.profile.id},partner_id.eq.${auth.profile.id}`)
     .neq("status", "withdrawn")
@@ -172,6 +203,22 @@ export async function DELETE(
   // If was confirmed, promote the first waitlisted team from the same division
   if (wasConfirmed) {
     await promoteTournamentWaitlist(tournamentId, division);
+  }
+
+  // Send withdrawal notification — non-blocking, test users suppressed inside notify()
+  const { data: tournament } = await auth.supabase
+    .from("tournaments")
+    .select("title")
+    .eq("id", tournamentId)
+    .single();
+
+  const tournamentTitle = tournament?.title ?? "the tournament";
+  const withdrawalEmailData = { tournamentTitle, tournamentId };
+
+  notify({ profileId: reg.player_id, type: "tournament_withdrawal", title: "Withdrawal Confirmed", body: `You have been withdrawn from ${tournamentTitle}.`, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentWithdrawal", emailData: withdrawalEmailData }).catch(() => {});
+
+  if (reg.partner_id) {
+    notify({ profileId: reg.partner_id, type: "tournament_withdrawal", title: "Withdrawal Confirmed", body: `Your team has been withdrawn from ${tournamentTitle}.`, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentWithdrawal", emailData: withdrawalEmailData }).catch(() => {});
   }
 
   revalidatePath(`/tournaments/${tournamentId}`);

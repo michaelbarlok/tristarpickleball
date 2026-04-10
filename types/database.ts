@@ -38,6 +38,7 @@ export type NotificationType =
   | "forum_mention"
   | "invite_sent"
   | "tournament_registration"
+  | "tournament_withdrawal"
   | "tournament_reminder"
   | "tournament_cancelled"
   | "badge_earned";
