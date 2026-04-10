@@ -329,6 +329,13 @@ export interface Notification {
 // Tournaments
 // ============================================================
 
+export type PaymentMethod = "venmo" | "paypal" | "zelle" | "cash" | "check" | "other";
+
+export interface PaymentOption {
+  method: PaymentMethod;
+  detail: string;
+}
+
 export interface Tournament {
   id: string;
   title: string;
@@ -343,6 +350,7 @@ export interface Tournament {
   player_cap?: number | null;
   max_teams_per_division?: number | null;
   entry_fee?: string | null;
+  payment_options?: PaymentOption[] | null;
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;
   status: TournamentStatus;

@@ -23,6 +23,7 @@ export default function EditTournamentPage() {
   const [playerCap, setPlayerCap] = useState("");
   const [maxTeamsPerDivision, setMaxTeamsPerDivision] = useState("");
   const [entryFee, setEntryFee] = useState("");
+  const [paymentOptions, setPaymentOptions] = useState<Record<string, string>>({});
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
   const [registrationClosesAt, setRegistrationClosesAt] = useState("");
   const [scoreToWinPool, setScoreToWinPool] = useState("11");
@@ -56,6 +57,13 @@ export default function EditTournamentPage() {
         setPlayerCap(data.player_cap?.toString() ?? "");
         setMaxTeamsPerDivision(data.max_teams_per_division?.toString() ?? "");
         setEntryFee(data.entry_fee ?? "");
+        if (Array.isArray((data as any).payment_options)) {
+          const opts: Record<string, string> = {};
+          for (const opt of (data as any).payment_options) {
+            if (opt?.method) opts[opt.method] = opt.detail ?? "";
+          }
+          setPaymentOptions(opts);
+        }
         setRegistrationOpensAt(data.registration_opens_at?.slice(0, 16) ?? "");
         setRegistrationClosesAt(data.registration_closes_at?.slice(0, 16) ?? "");
         setScoreToWinPool(data.score_to_win_pool?.toString() ?? "11");
@@ -114,6 +122,9 @@ export default function EditTournamentPage() {
         player_cap: playerCap ? parseInt(playerCap) : null,
         max_teams_per_division: maxTeamsPerDivision ? parseInt(maxTeamsPerDivision) : null,
         entry_fee: entryFee.trim() || null,
+        payment_options: Object.keys(paymentOptions).length > 0
+          ? Object.entries(paymentOptions).map(([method, detail]) => ({ method, detail }))
+          : null,
         registration_opens_at: registrationOpensAt || null,
         registration_closes_at: registrationClosesAt || null,
         score_to_win_pool: format === "round_robin" ? parseInt(scoreToWinPool) || 11 : null,
@@ -285,10 +296,67 @@ export default function EditTournamentPage() {
             <p className="text-xs text-surface-muted mt-1">Extra teams go on a waitlist</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Entry Fee & Payment Options */}
+        <div className="rounded-lg border border-surface-border p-4 space-y-4">
+          <p className="text-sm font-medium text-dark-200">Entry Fee &amp; Payment</p>
           <div>
-            <label className="block text-sm font-medium text-dark-200 mb-1">Entry Fee</label>
-            <input type="text" value={entryFee} onChange={(e) => setEntryFee(e.target.value)} className="input" />
+            <label className="block text-xs font-medium text-dark-200 mb-1">Entry Fee</label>
+            <input
+              type="text"
+              value={entryFee}
+              onChange={(e) => setEntryFee(e.target.value)}
+              className="input"
+              placeholder='e.g. "$20 per person"'
+            />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-dark-200 mb-2">Payment Methods</p>
+            <p className="text-xs text-surface-muted mb-3">
+              Select how players can pay their entry fee.
+            </p>
+            <div className="space-y-3">
+              {[
+                { key: "venmo",  label: "Venmo",  placeholder: "@username" },
+                { key: "paypal", label: "PayPal", placeholder: "email or paypal.me/username" },
+                { key: "zelle",  label: "Zelle",  placeholder: "phone number or email" },
+                { key: "cash",   label: "Cash",   placeholder: null },
+                { key: "check",  label: "Check",  placeholder: "payable to..." },
+                { key: "other",  label: "Other",  placeholder: "URL or description" },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={key in paymentOptions}
+                      onChange={(e) => {
+                        setPaymentOptions((prev) => {
+                          const next = { ...prev };
+                          if (e.target.checked) {
+                            next[key] = "";
+                          } else {
+                            delete next[key];
+                          }
+                          return next;
+                        });
+                      }}
+                      className="rounded border-surface-border text-brand-300 focus:ring-brand-300"
+                    />
+                    <span className="text-sm text-dark-200">{label}</span>
+                  </label>
+                  {key in paymentOptions && placeholder !== null && (
+                    <input
+                      type="text"
+                      value={paymentOptions[key]}
+                      onChange={(e) =>
+                        setPaymentOptions((prev) => ({ ...prev, [key]: e.target.value }))
+                      }
+                      className="input mt-2 ml-6"
+                      placeholder={placeholder}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
