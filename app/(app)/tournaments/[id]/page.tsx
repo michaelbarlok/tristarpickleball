@@ -193,6 +193,26 @@ export default async function TournamentDetailPage({
               <p className="text-sm text-dark-100">{tournament.entry_fee}</p>
             </div>
           )}
+          {tournament.payment_options && tournament.payment_options.length > 0 && (
+            <div>
+              <p className="text-xs text-surface-muted uppercase font-medium">Pay Via</p>
+              <div className="mt-1 space-y-1">
+                {tournament.payment_options.map((opt) => (
+                  <p key={opt.method} className="text-sm text-dark-100">
+                    <span className="font-medium capitalize">{opt.method}</span>
+                    {opt.detail && (
+                      <span className="text-dark-200">
+                        {" — "}
+                        {opt.method === "paypal" || opt.method === "other"
+                          ? <a href={opt.detail.startsWith("http") ? opt.detail : `https://${opt.detail}`} target="_blank" rel="noopener noreferrer" className="text-brand-300 hover:underline">{opt.detail}</a>
+                          : opt.detail}
+                      </span>
+                    )}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
           {tournament.registration_closes_at && (
             <div>
               <p className="text-xs text-surface-muted uppercase font-medium">Registration Closes</p>
