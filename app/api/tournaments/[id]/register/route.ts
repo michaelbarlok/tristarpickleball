@@ -136,16 +136,15 @@ export async function POST(
     ? `Your registration for ${tournament.title} is confirmed.`
     : `You've been added to the waitlist (#${waitlistPosition}) for ${tournament.title}.`;
 
-  // Fetch partner display name so each email can show who they're playing with
-  let partnerName: string | undefined;
-  if (partner_id) {
-    const { data: partnerProfile } = await auth.supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", partner_id)
-      .single();
-    partnerName = partnerProfile?.display_name ?? undefined;
-  }
+  // Fetch player + partner display names so each email shows who they're playing with
+  const profileIds = [auth.profile.id, ...(partner_id ? [partner_id] : [])];
+  const { data: nameRows } = await auth.supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", profileIds);
+  const nameMap = Object.fromEntries((nameRows ?? []).map((r) => [r.id, r.display_name]));
+  const playerName = nameMap[auth.profile.id];
+  const partnerName = partner_id ? nameMap[partner_id] : undefined;
 
   const baseEmailData = {
     tournamentTitle: tournament.title,
@@ -158,7 +157,7 @@ export async function POST(
   notify({ profileId: auth.profile.id, type: "tournament_registration", title: notifTitle, body: notifBody, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentRegistered", emailData: { ...baseEmailData, ...(partnerName ? { partnerName } : {}) } }).catch(() => {});
 
   if (partner_id) {
-    notify({ profileId: partner_id, type: "tournament_registration", title: notifTitle, body: notifBody, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentRegistered", emailData: { ...baseEmailData, partnerName: auth.profile.display_name } }).catch(() => {});
+    notify({ profileId: partner_id, type: "tournament_registration", title: notifTitle, body: notifBody, link: `/tournaments/${tournamentId}`, emailTemplate: "TournamentRegistered", emailData: { ...baseEmailData, ...(playerName ? { partnerName: playerName } : {}) } }).catch(() => {});
   }
 
   revalidatePath(`/tournaments/${tournamentId}`);
